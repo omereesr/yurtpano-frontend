@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client'
 
 // Backend'in calistigi adres (api.js'deki ile ayni degisken - VITE_BACKEND_URL)
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+const SOCKET_URL = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000').replace(/\/+$/, '')
 
 let socket = null
 

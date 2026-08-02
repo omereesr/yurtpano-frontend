@@ -1,7 +1,7 @@
 // Backend'in adresi. Yerel gelistirmede localhost:3000, prod'a deploy
 // ederken .env dosyasinda (ya da Vercel/Netlify ayarlarinda) VITE_BACKEND_URL
 // tanimlarsan onu kullanir.
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000').replace(/\/+$/, '')
 const BASE_URL = `${BACKEND_URL}/api`
 
 function getToken() {
