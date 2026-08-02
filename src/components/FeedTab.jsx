@@ -4,22 +4,13 @@ import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ProfileLink from './ProfileLink'
 import EmptyState from './EmptyState'
+import { timeAgo } from '../utils/time'
 
 const KIND_META = {
   order: { label: 'Ortak Siparis', icon: '🧾', tab: 'orders' },
   request: { label: 'Sosyallesme', icon: '🆘', tab: 'requests' },
   ride: { label: 'Yolculuk', icon: '🚕', tab: 'rides' },
   listing: { label: 'Ikinci El', icon: '📦', tab: 'listings' },
-}
-
-function timeAgo(dateStr) {
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diffMs / 60000)
-  if (mins < 1) return 'az once'
-  if (mins < 60) return `${mins} dk once`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours} sa once`
-  return `${Math.floor(hours / 24)} gun once`
 }
 
 // Bu sekme, diger 4 sekmedeki (siparis/sosyallesme/yolculuk/ikinci el) acik

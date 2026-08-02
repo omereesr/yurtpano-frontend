@@ -6,6 +6,7 @@ import ProfileLink from './ProfileLink'
 import Avatar from './Avatar'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import { formatClock } from '../utils/time'
 
 const CONTEXT_LABELS = {
   listing: 'Ikinci El Ilani',
@@ -13,12 +14,9 @@ const CONTEXT_LABELS = {
   order: 'Ortak Siparis',
   ride: 'Yolculuk',
 }
+const CONTEXT_TABS = { listing: 'listings', request: 'requests', order: 'orders', ride: 'rides' }
 
-function formatTime(dateStr) {
-  return new Date(dateStr).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-}
-
-export default function MessagesTab() {
+export default function MessagesTab({ onNavigate }) {
   const [view, setView] = useState('sohbetler') // sohbetler | istekler
   const [all, setAll] = useState([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +73,7 @@ export default function MessagesTab() {
         >
           ← Listeye don
         </button>
-        <ConversationThread conversationId={activeId} onChanged={load} />
+        <ConversationThread conversationId={activeId} onChanged={load} onNavigate={onNavigate} />
       </div>
     )
   }
@@ -104,11 +102,7 @@ export default function MessagesTab() {
         <EmptyState
           kind="chat"
           title={view === 'sohbetler' ? 'Henuz bir sohbetin yok.' : 'Bekleyen mesaj istegin yok.'}
-          subtitle={
-            view === 'sohbetler'
-              ? 'Bir ilana mesaj gonderdiginde burada gorunecek.'
-              : ''
-          }
+          subtitle={view === 'sohbetler' ? 'Bir ilana mesaj gonderdiginde burada gorunecek.' : ''}
         />
       ) : (
         <ul className="card-list">
@@ -120,15 +114,17 @@ export default function MessagesTab() {
                 </div>
               )}
               <div className="feed-card-header" style={{ marginTop: 6 }}>
-                <Avatar name={c.otherUser?.name} size={28} />
+                <Avatar name={c.otherUser?.name} size={28} isSystem={c.otherUser?.isSystem} />
                 <h3 style={{ margin: 0 }}>
-                  <ProfileLink userId={c.otherUser?.id} name={c.otherUser?.name} />
+                  {c.otherUser?.isSystem ? (
+                    c.otherUser?.name
+                  ) : (
+                    <ProfileLink userId={c.otherUser?.id} name={c.otherUser?.name} />
+                  )}
                 </h3>
               </div>
               {c.lastMessage && <p className="card-note">{c.lastMessage.body}</p>}
-              {view === 'istekler' && (
-                <RequestActions conversationId={c.id} onDone={load} />
-              )}
+              {view === 'istekler' && <RequestActions conversationId={c.id} onDone={load} />}
             </li>
           ))}
         </ul>
@@ -168,7 +164,7 @@ function RequestActions({ conversationId, onDone }) {
   )
 }
 
-function ConversationThread({ conversationId, onChanged }) {
+function ConversationThread({ conversationId, onChanged, onNavigate }) {
   const { user } = useAuth()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -177,7 +173,12 @@ function ConversationThread({ conversationId, onChanged }) {
 
   async function load() {
     try {
-      setData(await api.messages.getMessages(conversationId))
+      const result = await api.messages.getMessages(conversationId)
+      setData(result)
+      // Bu istek backend'de "okundu" zamanini da guncelliyor - ust bardaki
+      // zil/avatar rozetindeki sayinin ANINDA dusmesi icin global bir event
+      // yayinliyoruz (F5 atmadan).
+      window.dispatchEvent(new Event('yurtpano:messages-read'))
     } catch (err) {
       setError(err.message)
     }
@@ -191,6 +192,7 @@ function ConversationThread({ conversationId, onChanged }) {
     function handleNewMessage(payload) {
       if (payload.conversationId !== conversationId) return
       setData((prev) => (prev ? { ...prev, messages: [...prev.messages, payload.message] } : prev))
+      window.dispatchEvent(new Event('yurtpano:messages-read'))
     }
     function handleDeleted(payload) {
       if (payload.conversationId !== conversationId) return
@@ -238,26 +240,52 @@ function ConversationThread({ conversationId, onChanged }) {
   if (error && !data) return <p className="form-error">{error}</p>
   if (!data) return <p className="muted">Yukleniyor...</p>
 
+  const otherUser = data.conversation.otherUser
+  const isSystemThread = !!otherUser?.isSystem
   const isPendingForMe = data.conversation.status === 'pending' && data.conversation.initiatorId !== user.id
-  const otherUserId =
-    data.conversation.userAId === user.id ? data.conversation.userBId : data.conversation.userAId
 
   return (
     <div className="new-item-card" style={{ marginTop: 14 }}>
+      <div className="feed-card-header">
+        <Avatar name={otherUser?.name} size={32} isSystem={isSystemThread} />
+        <h3 style={{ margin: 0 }}>
+          {isSystemThread ? otherUser?.name : <ProfileLink userId={otherUser?.id} name={otherUser?.name} />}
+        </h3>
+        {!isSystemThread && (
+          <ReportButton reportedUserId={otherUser?.id} contextType="message" contextId={conversationId} />
+        )}
+      </div>
+
       {data.conversation.contextTitle && (
         <div className="card-tag">
           {CONTEXT_LABELS[data.conversation.contextType] || 'Ilan'}: {data.conversation.contextTitle}
         </div>
       )}
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <ReportButton reportedUserId={otherUserId} contextType="message" contextId={conversationId} />
-      </div>
+
       <div className="message-thread">
         {data.messages.map((m) => (
           <div key={m.id} className={m.senderId === user.id ? 'message-bubble mine' : 'message-bubble'}>
             <p>{m.body}</p>
+
+            {/* Sistem mesaji "X kisi ilanina katildi" ise, direkt o kisiye
+                gidip mesaj atabilecegin ve ilana gidebilecegin kucuk
+                baglantilar goster. */}
+            {m.refUserId && (
+              <div className="message-ref-chip">
+                👤 <ProfileLink userId={m.refUserId} name={m.refUserName} />
+              </div>
+            )}
+            {m.refContextId && onNavigate && (
+              <button
+                className="message-ref-chip message-ref-link"
+                onClick={() => onNavigate(CONTEXT_TABS[m.refContextType] || 'feed')}
+              >
+                📎 {m.refContextTitle || 'Ilana git'}
+              </button>
+            )}
+
             <div className="message-bubble-meta">
-              <span className="message-bubble-time">{formatTime(m.createdAt)}</span>
+              <span className="message-bubble-time">{formatClock(m.createdAt)}</span>
               {m.senderId === user.id && (
                 <button className="message-bubble-delete" onClick={() => handleDelete(m.id)}>
                   Sil

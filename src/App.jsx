@@ -40,7 +40,7 @@ function Shell() {
         {active === 'requests' && <RequestsTab />}
         {active === 'rides' && <RidesTab />}
         {active === 'listings' && <ListingsTab />}
-        {active === 'messages' && <MessagesTab />}
+        {active === 'messages' && <MessagesTab onNavigate={setActive} />}
         {active === 'profile' && <ProfileTab />}
         {active === 'admin' && user.isAdmin && <AdminTab />}
       </main>

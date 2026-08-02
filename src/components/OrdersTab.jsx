@@ -8,6 +8,7 @@ import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import { timeAgo, timeUntil } from '../utils/time'
 
 export default function OrdersTab() {
   const { user } = useAuth()
@@ -164,6 +165,10 @@ export default function OrdersTab() {
                   <div className="card-tag">Ortak Siparis</div>
                 </div>
                 <h3>{o.restaurant}</h3>
+                <p className="card-meta">
+                  {timeAgo(o.createdAt)}
+                  {timeUntil(o.expiresAt) ? ` - ⏳ ${timeUntil(o.expiresAt)}` : ''}
+                </p>
                 {o.minAmount && <p className="card-note">Min. sepet: {o.minAmount} TL</p>}
                 {o.note && <p className="card-note">{o.note}</p>}
                 <CapacityBar joined={o.joinedCount} capacity={o.capacity} />

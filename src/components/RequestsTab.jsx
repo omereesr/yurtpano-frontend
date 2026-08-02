@@ -7,6 +7,7 @@ import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import { timeAgo } from '../utils/time'
 
 const TYPE_LABELS = {
   esya: 'Esya',
@@ -145,6 +146,7 @@ export default function RequestsTab() {
                 </div>
               </div>
               <h3>{r.title}</h3>
+              <p className="card-meta">{timeAgo(r.createdAt)}</p>
               {r.description && <p className="card-note">{r.description}</p>}
               {r.userId === user.id ? (
                 <div className="card-actions">

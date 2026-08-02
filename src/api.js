@@ -48,32 +48,32 @@ export const api = {
   register: (payload) => request('/auth/register', { method: 'POST', body: payload, auth: false }),
   login: (identifier, password) => request('/auth/login', { method: 'POST', body: { identifier, password }, auth: false }),
 
-  getOrders: () => request('/orders'),
+  getOrders: (dormId) => request(dormId ? `/orders?dormId=${dormId}` : '/orders'),
   createOrder: (payload) => request('/orders', { method: 'POST', body: payload }),
   joinOrder: (id, amount) => request(`/orders/${id}/join`, { method: 'POST', body: amount ? { amount } : {} }),
   leaveOrder: (id) => request(`/orders/${id}/leave`, { method: 'POST' }),
   closeOrder: (id) => request(`/orders/${id}/close`, { method: 'POST' }),
   cancelOrder: (id) => request(`/orders/${id}/cancel`, { method: 'POST' }),
 
-  getRequests: () => request('/requests'),
+  getRequests: (dormId) => request(dormId ? `/requests?dormId=${dormId}` : '/requests'),
   createRequest: (payload) => request('/requests', { method: 'POST', body: payload }),
   fulfillRequest: (id) => request(`/requests/${id}/fulfill`, { method: 'POST' }),
   cancelRequest: (id) => request(`/requests/${id}/cancel`, { method: 'POST' }),
 
-  getRides: () => request('/rides'),
+  getRides: (dormId) => request(dormId ? `/rides?dormId=${dormId}` : '/rides'),
   createRide: (payload) => request('/rides', { method: 'POST', body: payload }),
   joinRide: (id) => request(`/rides/${id}/join`, { method: 'POST' }),
   leaveRide: (id) => request(`/rides/${id}/leave`, { method: 'POST' }),
   cancelRide: (id) => request(`/rides/${id}/cancel`, { method: 'POST' }),
 
-  getListings: () => request('/listings'),
+  getListings: (dormId) => request(dormId ? `/listings?dormId=${dormId}` : '/listings'),
   createListing: (payload) => request('/listings', { method: 'POST', body: payload }),
   markSold: (id) => request(`/listings/${id}/sold`, { method: 'POST' }),
   cancelListing: (id) => request(`/listings/${id}/cancel`, { method: 'POST' }),
 
   // Yonetici (admin) uclari - sadece isAdmin=true kullanicilar cagirabilir
   admin: {
-    getUsers: () => request('/admin/users'),
+    getUsers: (dormId) => request(dormId ? `/admin/users?dormId=${dormId}` : '/admin/users'),
     banUser: (id) => request(`/admin/users/${id}/ban`, { method: 'POST' }),
     unbanUser: (id) => request(`/admin/users/${id}/unban`, { method: 'POST' }),
     reactivateUser: (id) => request(`/admin/users/${id}/reactivate`, { method: 'POST' }),
@@ -81,8 +81,9 @@ export const api = {
     createDorm: (payload) => request('/admin/dorms', { method: 'POST', body: payload }),
     updateDorm: (id, payload) => request(`/admin/dorms/${id}`, { method: 'PUT', body: payload }),
     deleteDorm: (id) => request(`/admin/dorms/${id}`, { method: 'DELETE' }),
-    getStats: () => request('/admin/stats'),
-    getReports: () => request('/admin/reports'),
+    getStats: (dormId) => request(dormId ? `/admin/stats?dormId=${dormId}` : '/admin/stats'),
+    getReports: (dormId) => request(dormId ? `/admin/reports?dormId=${dormId}` : '/admin/reports'),
+    getReportDetail: (id) => request(`/admin/reports/${id}`),
     resolveReport: (id) => request(`/admin/reports/${id}/resolve`, { method: 'POST' }),
   },
 

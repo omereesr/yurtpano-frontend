@@ -469,6 +469,24 @@ select:focus {
   text-decoration: underline;
 }
 
+.message-ref-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  margin-top: 6px;
+  margin-right: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.message-ref-link {
+  cursor: pointer;
+  color: var(--accent-teal);
+  font-weight: 600;
+}
+
 .theme-toggle {
   position: fixed;
   top: 12px;
@@ -598,6 +616,9 @@ select:focus {
   font-family: var(--font-display);
   font-weight: 600;
   flex-shrink: 0;
+}
+.avatar-system {
+  background: var(--ink-soft);
 }
 
 /* --- Onayli (verified) rozeti --- */
@@ -819,4 +840,12 @@ select:focus {
     text-overflow: ellipsis;
     max-width: 100%;
   }
+}
+
+.report-detail {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }

@@ -7,6 +7,7 @@ import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import { timeAgo } from '../utils/time'
 
 export default function RidesTab() {
   const { user } = useAuth()
@@ -157,7 +158,9 @@ export default function RidesTab() {
                   <div className="card-tag">Yolculuk</div>
                 </div>
                 <h3>{r.destination}</h3>
-                <p className="card-meta">{new Date(r.departureAt).toLocaleString('tr-TR')}</p>
+                <p className="card-meta">
+                  {new Date(r.departureAt).toLocaleString('tr-TR')} - {timeAgo(r.createdAt)} paylasildi
+                </p>
                 {r.note && <p className="card-note">{r.note}</p>}
                 <p className="card-meta">
                   Koltuk: {r.seatsTaken}/{r.seatsTotal}

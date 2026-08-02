@@ -18,7 +18,19 @@ function initialsFor(name) {
   return (first + last).toUpperCase()
 }
 
-export default function Avatar({ name, size = 32 }) {
+export default function Avatar({ name, size = 32, isSystem = false }) {
+  if (isSystem) {
+    return (
+      <div
+        className="avatar avatar-system"
+        style={{ width: size, height: size, fontSize: size * 0.5 }}
+        title="Sistem bildirimi"
+      >
+        🔔
+      </div>
+    )
+  }
+
   return (
     <div
       className="avatar"

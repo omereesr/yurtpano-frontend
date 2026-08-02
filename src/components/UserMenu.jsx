@@ -23,12 +23,19 @@ export default function UserMenu({ userName, onNavigate, onLogout }) {
   useEffect(() => {
     refreshUnread()
     const socket = getSocket()
-    if (!socket) return
-    socket.on('message:new', refreshUnread)
-    socket.on('conversation:new', refreshUnread)
+    if (socket) {
+      socket.on('message:new', refreshUnread)
+      socket.on('conversation:new', refreshUnread)
+    }
+    // Bir konusma acilip "okundu" isaretlendiginde (MessagesTab tarafindan
+    // yayinlanir) rozeti F5 atmadan aninda guncelle.
+    window.addEventListener('yurtpano:messages-read', refreshUnread)
     return () => {
-      socket.off('message:new', refreshUnread)
-      socket.off('conversation:new', refreshUnread)
+      if (socket) {
+        socket.off('message:new', refreshUnread)
+        socket.off('conversation:new', refreshUnread)
+      }
+      window.removeEventListener('yurtpano:messages-read', refreshUnread)
     }
   }, [])
 

@@ -7,6 +7,7 @@ import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import { timeAgo } from '../utils/time'
 
 export default function ListingsTab() {
   const { user } = useAuth()
@@ -136,6 +137,7 @@ export default function ListingsTab() {
                 <div className="card-tag">Ikinci El</div>
               </div>
               <h3>{l.title}</h3>
+              <p className="card-meta">{timeAgo(l.createdAt)}</p>
               {l.description && <p className="card-note">{l.description}</p>}
               <p className="card-price">{l.price} TL</p>
               {l.userId === user.id ? (
