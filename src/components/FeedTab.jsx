@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { getSocket } from '../socket'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ProfileLink from './ProfileLink'
 import EmptyState from './EmptyState'
+import SkeletonList from './SkeletonList'
 import { timeAgo } from '../utils/time'
 
 const KIND_META = {
@@ -22,33 +24,45 @@ export default function FeedTab({ onNavigate }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true)
-      try {
-        const [orders, requests, rides, listings] = await Promise.all([
-          api.getOrders(),
-          api.getRequests(),
-          api.getRides(),
-          api.getListings(),
-        ])
-        const merged = [
-          ...orders.map((o) => ({ kind: 'order', id: o.id, createdAt: o.createdAt, data: o })),
-          ...requests.map((r) => ({ kind: 'request', id: r.id, createdAt: r.createdAt, data: r })),
-          ...rides.map((r) => ({ kind: 'ride', id: r.id, createdAt: r.createdAt, data: r })),
-          ...listings.map((l) => ({ kind: 'listing', id: l.id, createdAt: l.createdAt, data: l })),
-        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        setItems(merged)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
+  async function load(silent = false) {
+    if (!silent) setLoading(true)
+    try {
+      const [orders, requests, rides, listings] = await Promise.all([
+        api.getOrders(),
+        api.getRequests(),
+        api.getRides(),
+        api.getListings(),
+      ])
+      const merged = [
+        ...orders.map((o) => ({ kind: 'order', id: o.id, createdAt: o.createdAt, data: o })),
+        ...requests.map((r) => ({ kind: 'request', id: r.id, createdAt: r.createdAt, data: r })),
+        ...rides.map((r) => ({ kind: 'ride', id: r.id, createdAt: r.createdAt, data: r })),
+        ...listings.map((l) => ({ kind: 'listing', id: l.id, createdAt: l.createdAt, data: l })),
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      setItems(merged)
+    } catch (err) {
+      if (!silent) setError(err.message)
+    } finally {
+      if (!silent) setLoading(false)
     }
+  }
+
+  useEffect(() => {
     load()
+
+    // Yurtta herhangi bir kategoride yeni bir ilan/degisiklik oldugunda
+    // F5 atmadan sessizce akisi tazele.
+    const socket = getSocket()
+    if (!socket) return
+    function handleChanged() {
+      load(true)
+    }
+    socket.on('listing:changed', handleChanged)
+    return () => socket.off('listing:changed', handleChanged)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  if (loading) return <p className="muted">Yukleniyor...</p>
+  if (loading) return <SkeletonList count={4} />
   if (error) return <p className="form-error">{error}</p>
   if (items.length === 0) {
     return (

@@ -69,9 +69,6 @@ export default function UserMenu({ userName, onNavigate, onLogout }) {
           <button type="button" className="user-menu-item" onClick={() => go('profile')}>
             👤 Profilim
           </button>
-          <button type="button" className="user-menu-item" onClick={() => go('messages')}>
-            💬 Mesajlar {unread > 0 && <span className="user-menu-badge">{unread > 9 ? '9+' : unread}</span>}
-          </button>
           <div className="user-menu-divider" />
           <button type="button" className="user-menu-item user-menu-logout" onClick={onLogout}>
             Cikis

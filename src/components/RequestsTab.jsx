@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
+import { getSocket } from '../socket'
 import MessageButton from './MessageButton'
 import ProfileLink from './ProfileLink'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import SkeletonList from './SkeletonList'
 import { timeAgo } from '../utils/time'
 
 const TYPE_LABELS = {
@@ -17,11 +20,13 @@ const TYPE_LABELS = {
   diger: 'Diger',
 }
 
-export default function RequestsTab() {
+export default function RequestsTab({ mode = 'browse', onPosted }) {
   const { user } = useAuth()
+  const toast = useToast()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState({ type: 'esya', title: '', description: '' })
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState({})
@@ -33,20 +38,29 @@ export default function RequestsTab() {
     setBusy((b) => ({ ...b, [`${id}:${action}`]: value }))
   }
 
-  async function load() {
-    setLoading(true)
+  async function load(silent = false) {
+    if (!silent) setLoading(true)
     try {
       setItems(await api.getRequests())
     } catch (err) {
-      setError(err.message)
+      if (!silent) setError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
+    if (mode === 'create') return
     load()
-  }, [])
+    const socket = getSocket()
+    if (!socket) return
+    function handleChanged(payload) {
+      if (payload.kind === 'requests') load(true)
+    }
+    socket.on('listing:changed', handleChanged)
+    return () => socket.off('listing:changed', handleChanged)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -56,7 +70,8 @@ export default function RequestsTab() {
     try {
       await api.createRequest({ ...form, description: form.description || undefined })
       setForm({ type: 'esya', title: '', description: '' })
-      await load()
+      toast('Ilan paylasildi! 🎉')
+      onPosted?.()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -68,10 +83,16 @@ export default function RequestsTab() {
     if (isBusy(id, 'fulfill')) return
     setError('')
     setItemBusy(id, 'fulfill', true)
+
+    // Cozulen ilan acik listede gorunmeyecek, direkt listeden cikar.
+    const prevItems = items
+    setItems((prev) => prev.filter((r) => r.id !== id))
+
     try {
       await api.fulfillRequest(id)
-      await load()
+      toast('Cozuldu olarak isaretlendi.')
     } catch (err) {
+      setItems(prevItems)
       setError(err.message)
     } finally {
       setItemBusy(id, 'fulfill', false)
@@ -82,18 +103,23 @@ export default function RequestsTab() {
     if (isBusy(id, 'cancel')) return
     setError('')
     setItemBusy(id, 'cancel', true)
+
+    const prevItems = items
+    setItems((prev) => prev.filter((r) => r.id !== id))
+
     try {
       await api.cancelRequest(id)
-      await load()
+      toast('Ilan iptal edildi.')
     } catch (err) {
+      setItems(prevItems)
       setError(err.message)
     } finally {
       setItemBusy(id, 'cancel', false)
     }
   }
 
-  return (
-    <div className="tab-content">
+  if (mode === 'create') {
+    return (
       <section className="new-item-card">
         <h2>Anlik ihtiyacini paylas</h2>
         <form onSubmit={handleCreate} className="inline-form">
@@ -115,24 +141,41 @@ export default function RequestsTab() {
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
+          {error && <p className="form-error">{error}</p>}
           <button className="btn-primary" type="submit" disabled={creating}>
             {creating ? 'Paylasiliyor...' : 'Paylas'}
           </button>
         </form>
       </section>
+    )
+  }
 
+  const visibleItems = search
+    ? items.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()))
+    : items
+
+  return (
+    <div className="tab-content">
+      {items.length > 0 && (
+        <input
+          className="search-box"
+          placeholder="Ilan ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      )}
       {error && <p className="form-error">{error}</p>}
       {loading ? (
-        <p className="muted">Yukleniyor...</p>
-      ) : items.length === 0 ? (
+        <SkeletonList />
+      ) : visibleItems.length === 0 ? (
         <EmptyState
           kind="megaphone"
-          title="Su an acik bir ilan yok."
-          subtitle="Bir ihtiyacini, ders arkadasligini ya da oyun arkadasligi ilanini ilk sen ac!"
+          title={search ? 'Aramana uyan ilan yok.' : 'Su an acik bir ilan yok.'}
+          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk ilani sen ac!'}
         />
       ) : (
         <ul className="card-list">
-          {items.map((r) => (
+          {visibleItems.map((r) => (
             <li key={r.id} className="card">
               <div className="feed-card-header">
                 <Avatar name={r.user?.name} size={28} />

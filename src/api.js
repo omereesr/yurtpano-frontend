@@ -100,6 +100,8 @@ export const api = {
       request('/profile/notifications', { method: 'PUT', body: { dmNotifications } }),
     deactivate: (currentPassword) =>
       request('/profile/deactivate', { method: 'POST', body: { currentPassword } }),
+    rate: (userId, score, comment) =>
+      request(`/profile/${userId}/rate`, { method: 'POST', body: { score, comment } }),
   },
 
   // DM (mesajlasma) uclari

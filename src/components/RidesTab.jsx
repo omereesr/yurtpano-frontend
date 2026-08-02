@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
+import { getSocket } from '../socket'
 import MessageButton from './MessageButton'
 import ProfileLink from './ProfileLink'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import SkeletonList from './SkeletonList'
 import { timeAgo } from '../utils/time'
 
-export default function RidesTab() {
+export default function RidesTab({ mode = 'browse', onPosted }) {
   const { user } = useAuth()
+  const toast = useToast()
   const [rides, setRides] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState({ destination: '', departureAt: '', seatsTotal: 4, note: '' })
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState({})
@@ -25,20 +30,29 @@ export default function RidesTab() {
     setBusy((b) => ({ ...b, [`${id}:${action}`]: value }))
   }
 
-  async function load() {
-    setLoading(true)
+  async function load(silent = false) {
+    if (!silent) setLoading(true)
     try {
       setRides(await api.getRides())
     } catch (err) {
-      setError(err.message)
+      if (!silent) setError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
+    if (mode === 'create') return
     load()
-  }, [])
+    const socket = getSocket()
+    if (!socket) return
+    function handleChanged(payload) {
+      if (payload.kind === 'rides') load(true)
+    }
+    socket.on('listing:changed', handleChanged)
+    return () => socket.off('listing:changed', handleChanged)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -53,7 +67,8 @@ export default function RidesTab() {
         note: form.note || undefined,
       })
       setForm({ destination: '', departureAt: '', seatsTotal: 4, note: '' })
-      await load()
+      toast('Yolculuk paylasildi! 🎉')
+      onPosted?.()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -65,10 +80,30 @@ export default function RidesTab() {
     if (isBusy(id, 'join')) return
     setError('')
     setItemBusy(id, 'join', true)
+
+    const prevRides = rides
+    setRides((prev) =>
+      prev.map((r) => {
+        if (r.id !== id) return r
+        const newSeatsTaken = r.seatsTaken + 1
+        return {
+          ...r,
+          seatsTaken: newSeatsTaken,
+          status: newSeatsTaken >= r.seatsTotal ? 'closed' : r.status,
+          participants: [
+            ...r.participants,
+            { id: `optimistic-${Date.now()}`, user: { id: user.id, name: user.name, roomNo: user.roomNo } },
+          ],
+        }
+      })
+    )
+
     try {
       await api.joinRide(id)
-      await load()
+      toast('Koltugu kaptin!')
+      await load(true)
     } catch (err) {
+      setRides(prevRides)
       setError(err.message)
     } finally {
       setItemBusy(id, 'join', false)
@@ -79,10 +114,15 @@ export default function RidesTab() {
     if (isBusy(id, 'cancel')) return
     setError('')
     setItemBusy(id, 'cancel', true)
+
+    const prevRides = rides
+    setRides((prev) => prev.filter((r) => r.id !== id))
+
     try {
       await api.cancelRide(id)
-      await load()
+      toast('Yolculuk iptal edildi.')
     } catch (err) {
+      setRides(prevRides)
       setError(err.message)
     } finally {
       setItemBusy(id, 'cancel', false)
@@ -93,18 +133,35 @@ export default function RidesTab() {
     if (isBusy(id, 'leave')) return
     setError('')
     setItemBusy(id, 'leave', true)
+
+    const prevRides = rides
+    setRides((prev) =>
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              seatsTaken: Math.max(1, r.seatsTaken - 1),
+              status: r.status === 'closed' ? 'open' : r.status,
+              participants: r.participants.filter((p) => p.user?.id !== user.id),
+            }
+          : r
+      )
+    )
+
     try {
       await api.leaveRide(id)
-      await load()
+      toast('Yolculuktan ayrildin.')
+      await load(true)
     } catch (err) {
+      setRides(prevRides)
       setError(err.message)
     } finally {
       setItemBusy(id, 'leave', false)
     }
   }
 
-  return (
-    <div className="tab-content">
+  if (mode === 'create') {
+    return (
       <section className="new-item-card">
         <h2>Yolculuk paylas</h2>
         <form onSubmit={handleCreate} className="inline-form">
@@ -132,20 +189,41 @@ export default function RidesTab() {
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
           />
+          {error && <p className="form-error">{error}</p>}
           <button className="btn-primary" type="submit" disabled={creating}>
             {creating ? 'Paylasiliyor...' : 'Paylas'}
           </button>
         </form>
       </section>
+    )
+  }
 
+  const visibleRides = search
+    ? rides.filter((r) => r.destination.toLowerCase().includes(search.toLowerCase()))
+    : rides
+
+  return (
+    <div className="tab-content">
+      {rides.length > 0 && (
+        <input
+          className="search-box"
+          placeholder="Nereye gidiyor ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      )}
       {error && <p className="form-error">{error}</p>}
       {loading ? (
-        <p className="muted">Yukleniyor...</p>
-      ) : rides.length === 0 ? (
-        <EmptyState kind="car" title="Su an planlanan bir yolculuk yok." subtitle="Ilk yolculugu sen paylas!" />
+        <SkeletonList />
+      ) : visibleRides.length === 0 ? (
+        <EmptyState
+          kind="car"
+          title={search ? 'Aramana uyan yolculuk yok.' : 'Su an planlanan bir yolculuk yok.'}
+          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk yolculugu sen paylas!'}
+        />
       ) : (
         <ul className="card-list">
-          {rides.map((r) => {
+          {visibleRides.map((r) => {
             const alreadyJoined = r.participants?.some((p) => p.user?.id === user.id)
             return (
               <li key={r.id} className="card">

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
+import { getSocket } from '../socket'
 import CapacityBar from './CapacityBar'
 import MessageButton from './MessageButton'
 import ProfileLink from './ProfileLink'
@@ -8,17 +10,18 @@ import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import SkeletonList from './SkeletonList'
 import { timeAgo, timeUntil } from '../utils/time'
 
-export default function OrdersTab() {
+export default function OrdersTab({ mode = 'browse', onPosted }) {
   const { user } = useAuth()
+  const toast = useToast()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState({ restaurant: '', capacity: '', minAmount: '', note: '' })
   const [creating, setCreating] = useState(false)
-  // Ayni ana ayni butona birden fazla basilinca (yavas internette) ayni istegin
-  // iki kere gitmesini onlemek icin, hangi kartin hangi islemde "mesgul" oldugunu tutuyoruz.
   const [busy, setBusy] = useState({})
 
   function isBusy(id, action) {
@@ -28,20 +31,33 @@ export default function OrdersTab() {
     setBusy((b) => ({ ...b, [`${id}:${action}`]: value }))
   }
 
-  async function load() {
-    setLoading(true)
+  // silent=true: arka planda tazele, "Yukleniyor..." donmesin (F5 hissi vermesin)
+  async function load(silent = false) {
+    if (!silent) setLoading(true)
     try {
       setOrders(await api.getOrders())
     } catch (err) {
-      setError(err.message)
+      if (!silent) setError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
+    if (mode === 'create') return // sadece form gosterilecekse listeyi hic cekme
     load()
-  }, [])
+
+    // Baska biri (ya da baska bir sekmede kendimiz) bir siparis actiginda/
+    // degistirdiginde F5 atmadan sessizce guncelle.
+    const socket = getSocket()
+    if (!socket) return
+    function handleChanged(payload) {
+      if (payload.kind === 'orders') load(true)
+    }
+    socket.on('listing:changed', handleChanged)
+    return () => socket.off('listing:changed', handleChanged)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -56,7 +72,8 @@ export default function OrdersTab() {
         note: form.note || undefined,
       })
       setForm({ restaurant: '', capacity: '', minAmount: '', note: '' })
-      await load()
+      toast('Siparis acildi! 🎉')
+      onPosted?.()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -68,10 +85,32 @@ export default function OrdersTab() {
     if (isBusy(id, 'join')) return
     setError('')
     setItemBusy(id, 'join', true)
+
+    // ONCE ekrani guncelle (sunucu cevabini beklemeden) - butona basar
+    // basmaz "katildim" hissi versin. Hata donerse asagida geri aliyoruz.
+    const prevOrders = orders
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== id) return o
+        const newJoinedCount = o.joinedCount + 1
+        return {
+          ...o,
+          joinedCount: newJoinedCount,
+          status: newJoinedCount >= o.capacity ? 'closed' : o.status,
+          participants: [
+            ...o.participants,
+            { id: `optimistic-${Date.now()}`, user: { id: user.id, name: user.name, roomNo: user.roomNo } },
+          ],
+        }
+      })
+    )
+
     try {
       await api.joinOrder(id)
-      await load()
+      toast('Siparise katildin!')
+      await load(true) // gercek veriyle sessizce mutabakat (silent reconcile)
     } catch (err) {
+      setOrders(prevOrders) // geri al
       setError(err.message)
     } finally {
       setItemBusy(id, 'join', false)
@@ -82,10 +121,27 @@ export default function OrdersTab() {
     if (isBusy(id, 'leave')) return
     setError('')
     setItemBusy(id, 'leave', true)
+
+    const prevOrders = orders
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === id
+          ? {
+              ...o,
+              joinedCount: Math.max(0, o.joinedCount - 1),
+              status: o.status === 'closed' ? 'open' : o.status,
+              participants: o.participants.filter((p) => p.user?.id !== user.id),
+            }
+          : o
+      )
+    )
+
     try {
       await api.leaveOrder(id)
-      await load()
+      toast('Siparisten ayrildin.')
+      await load(true)
     } catch (err) {
+      setOrders(prevOrders)
       setError(err.message)
     } finally {
       setItemBusy(id, 'leave', false)
@@ -96,18 +152,25 @@ export default function OrdersTab() {
     if (isBusy(id, 'cancel')) return
     setError('')
     setItemBusy(id, 'cancel', true)
+
+    // Iptal edilen siparis acik listede zaten gorunmeyecek, o yuzden
+    // dogrudan listeden cikariyoruz.
+    const prevOrders = orders
+    setOrders((prev) => prev.filter((o) => o.id !== id))
+
     try {
       await api.cancelOrder(id)
-      await load()
+      toast('Siparis iptal edildi.')
     } catch (err) {
+      setOrders(prevOrders) // hata olursa siparisi geri koy
       setError(err.message)
     } finally {
       setItemBusy(id, 'cancel', false)
     }
   }
 
-  return (
-    <div className="tab-content">
+  if (mode === 'create') {
+    return (
       <section className="new-item-card">
         <h2>Yeni ortak siparis ac</h2>
         <form onSubmit={handleCreate} className="inline-form">
@@ -138,20 +201,41 @@ export default function OrdersTab() {
             value={form.note}
             onChange={(e) => setForm({ ...form, note: e.target.value })}
           />
+          {error && <p className="form-error">{error}</p>}
           <button className="btn-primary" type="submit" disabled={creating}>
             {creating ? 'Aciliyor...' : 'Ac'}
           </button>
         </form>
       </section>
+    )
+  }
 
+  const visibleOrders = search
+    ? orders.filter((o) => o.restaurant.toLowerCase().includes(search.toLowerCase()))
+    : orders
+
+  return (
+    <div className="tab-content">
+      {orders.length > 0 && (
+        <input
+          className="search-box"
+          placeholder="Restoran ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      )}
       {error && <p className="form-error">{error}</p>}
       {loading ? (
-        <p className="muted">Yukleniyor...</p>
-      ) : orders.length === 0 ? (
-        <EmptyState kind="cart" title="Su an acik siparis yok." subtitle="Ilk siparisi sen ac, birileri katilsin!" />
+        <SkeletonList />
+      ) : visibleOrders.length === 0 ? (
+        <EmptyState
+          kind="cart"
+          title={search ? 'Aramana uyan siparis yok.' : 'Su an acik siparis yok.'}
+          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk siparisi sen ac!'}
+        />
       ) : (
         <ul className="card-list">
-          {orders.map((o) => {
+          {visibleOrders.map((o) => {
             const alreadyJoined = o.participants?.some((p) => p.user?.id === user.id)
             return (
               <li key={o.id} className="card">

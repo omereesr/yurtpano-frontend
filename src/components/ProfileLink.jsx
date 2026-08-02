@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { useToast } from '../context/ToastContext'
 import MessageButton from './MessageButton'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
@@ -36,6 +37,50 @@ export default function ProfileLink({ userId, name, children }) {
       </button>
       {open && <ProfileModal userId={userId} onClose={() => setOpen(false)} />}
     </>
+  )
+}
+
+function StarRating({ userId, ratingAverage, ratingCount, myRating, onRated }) {
+  const toast = useToast()
+  const [hover, setHover] = useState(0)
+  const [saving, setSaving] = useState(false)
+
+  async function handleRate(score) {
+    if (saving) return
+    setSaving(true)
+    try {
+      const result = await api.profile.rate(userId, score)
+      onRated(result)
+      toast('Puanin kaydedildi ⭐')
+    } catch (err) {
+      toast(err.message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="star-rating">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={saving}
+            className={n <= (hover || myRating || 0) ? 'filled' : ''}
+            onMouseEnter={() => setHover(n)}
+            onMouseLeave={() => setHover(0)}
+            onClick={() => handleRate(n)}
+          >
+            ★
+          </button>
+        ))}
+        <span className="rating-summary">
+          {ratingCount > 0 ? `${ratingAverage.toFixed(1)} (${ratingCount} degerlendirme)` : 'Henuz puan yok'}
+        </span>
+      </div>
+      {myRating && <p className="card-note" style={{ margin: '4px 0 0' }}>Senin puanin: {myRating} ⭐</p>}
+    </div>
   )
 }
 
@@ -110,6 +155,14 @@ function ProfileModal({ userId, onClose }) {
                 {profile.discord && <span className="card-tag">Discord: {profile.discord}</span>}
               </div>
             )}
+
+            <StarRating
+              userId={profile.id}
+              ratingAverage={profile.ratingAverage}
+              ratingCount={profile.ratingCount}
+              myRating={profile.myRating}
+              onRated={(result) => setProfile((p) => ({ ...p, ...result }))}
+            />
 
             <div style={{ marginTop: 14 }} className="card-actions">
               <MessageButton toUserId={profile.id} />

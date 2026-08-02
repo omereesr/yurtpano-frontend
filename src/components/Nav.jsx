@@ -3,10 +3,9 @@ import UserMenu from './UserMenu'
 
 const TABS = [
   { key: 'feed', label: 'Akis', icon: '🏠' },
-  { key: 'orders', label: 'Ortak Siparis', icon: '🧾' },
-  { key: 'requests', label: 'Sosyallesme', icon: '🆘' },
-  { key: 'rides', label: 'Yolculuk', icon: '🚕' },
-  { key: 'listings', label: 'Ikinci El', icon: '📦' },
+  { key: 'listings', label: 'Ilanlar', icon: '📋' },
+  { key: 'post', label: 'Ilan Ver', icon: '➕' },
+  { key: 'messages', label: 'Mesajlar', icon: '💬' },
 ]
 
 export default function Nav({ active, onChange, onLogout, userName, isAdmin }) {

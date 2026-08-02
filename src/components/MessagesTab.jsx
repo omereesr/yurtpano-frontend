@@ -170,11 +170,14 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
   const [error, setError] = useState('')
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
+  const [otherTyping, setOtherTyping] = useState(false)
+  const [otherLastReadAt, setOtherLastReadAt] = useState(null)
 
   async function load() {
     try {
       const result = await api.messages.getMessages(conversationId)
       setData(result)
+      setOtherLastReadAt(result.conversation.otherLastReadAt)
       // Bu istek backend'de "okundu" zamanini da guncelliyor - ust bardaki
       // zil/avatar rozetindeki sayinin ANINDA dusmesi icin global bir event
       // yayinliyoruz (F5 atmadan).
@@ -189,9 +192,11 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
 
     const socket = getSocket()
     if (!socket) return
+    let typingTimeout
     function handleNewMessage(payload) {
       if (payload.conversationId !== conversationId) return
       setData((prev) => (prev ? { ...prev, messages: [...prev.messages, payload.message] } : prev))
+      setOtherTyping(false)
       window.dispatchEvent(new Event('yurtpano:messages-read'))
     }
     function handleDeleted(payload) {
@@ -200,14 +205,38 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
         prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== payload.messageId) } : prev
       )
     }
+    function handleTyping(payload) {
+      if (payload.conversationId !== conversationId) return
+      setOtherTyping(true)
+      clearTimeout(typingTimeout)
+      typingTimeout = setTimeout(() => setOtherTyping(false), 3000)
+    }
+    function handleRead(payload) {
+      if (payload.conversationId !== conversationId) return
+      setOtherLastReadAt(new Date().toISOString())
+    }
     socket.on('message:new', handleNewMessage)
     socket.on('message:deleted', handleDeleted)
+    socket.on('typing', handleTyping)
+    socket.on('messages:read', handleRead)
     return () => {
       socket.off('message:new', handleNewMessage)
       socket.off('message:deleted', handleDeleted)
+      socket.off('typing', handleTyping)
+      socket.off('messages:read', handleRead)
+      clearTimeout(typingTimeout)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
+
+  function handleTypingInput(value) {
+    setBody(value)
+    const socket = getSocket()
+    const otherUserId = data?.conversation?.otherUser?.id
+    if (socket && otherUserId && !data?.conversation?.otherUser?.isSystem) {
+      socket.emit('typing', { conversationId, toUserId: otherUserId })
+    }
+  }
 
   async function handleSend(e) {
     e.preventDefault()
@@ -243,6 +272,10 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
   const otherUser = data.conversation.otherUser
   const isSystemThread = !!otherUser?.isSystem
   const isPendingForMe = data.conversation.status === 'pending' && data.conversation.initiatorId !== user.id
+  // Benim gonderdigim son mesaj, karsi tarafin "okundu" zamanindan ONCE
+  // gonderilmisse "Gorundu" gosterebiliriz.
+  const myMessages = data.messages.filter((m) => m.senderId === user.id)
+  const lastMineId = myMessages.length > 0 ? myMessages[myMessages.length - 1].id : null
 
   return (
     <div className="new-item-card" style={{ marginTop: 14 }}>
@@ -292,9 +325,14 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
                 </button>
               )}
             </div>
+            {m.id === lastMineId && otherLastReadAt && new Date(m.createdAt) <= new Date(otherLastReadAt) && (
+              <span className="read-receipt">Gorundu ✓✓</span>
+            )}
           </div>
         ))}
       </div>
+
+      {otherTyping && <p className="typing-indicator">{otherUser?.name} yaziyor...</p>}
 
       {isPendingForMe ? (
         <RequestActions
@@ -311,7 +349,7 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
           <textarea
             placeholder="Mesajini yaz..."
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={(e) => handleTypingInput(e.target.value)}
             rows={2}
           />
           {error && <p className="form-error">{error}</p>}

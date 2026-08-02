@@ -409,6 +409,20 @@ function ReportsSection({ dormId }) {
     }
   }
 
+  async function toggleBan(reportedUser) {
+    setBusy((b) => ({ ...b, [reportedUser.id]: true }))
+    setError('')
+    try {
+      if (reportedUser.banned) await api.admin.unbanUser(reportedUser.id)
+      else await api.admin.banUser(reportedUser.id)
+      await load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy((b) => ({ ...b, [reportedUser.id]: false }))
+    }
+  }
+
   if (loading) return <p className="muted">Yukleniyor...</p>
 
   return (
@@ -430,6 +444,7 @@ function ReportsSection({ dormId }) {
                 {r.reportedUser ? ` - Hakkinda: ${r.reportedUser.name}` : ''}
                 {r.contextType ? ` - Konu: ${r.contextType}` : ''}
               </p>
+              {r.reportedUser?.banned && <p className="card-note">Bu kullanici zaten banli.</p>}
               <p className="card-meta">{new Date(r.createdAt).toLocaleString('tr-TR')}</p>
               <div className="card-actions">
                 <button
@@ -441,6 +456,19 @@ function ReportsSection({ dormId }) {
                 {r.status === 'open' && (
                   <button className="btn-secondary" disabled={busy[r.id]} onClick={() => resolve(r.id)}>
                     {busy[r.id] ? 'Bekleyin...' : 'Cozuldu Isaretle'}
+                  </button>
+                )}
+                {r.reportedUser && (
+                  <button
+                    className="btn-secondary"
+                    disabled={busy[r.reportedUser.id]}
+                    onClick={() => toggleBan(r.reportedUser)}
+                  >
+                    {busy[r.reportedUser.id]
+                      ? 'Bekleyin...'
+                      : r.reportedUser.banned
+                        ? 'Kullanicinin Banini Kaldir'
+                        : 'Kullaniciyi Banla'}
                   </button>
                 )}
               </div>

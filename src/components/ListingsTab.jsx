@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
+import { getSocket } from '../socket'
 import MessageButton from './MessageButton'
 import ProfileLink from './ProfileLink'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
+import SkeletonList from './SkeletonList'
 import { timeAgo } from '../utils/time'
 
-export default function ListingsTab() {
+export default function ListingsTab({ mode = 'browse', onPosted }) {
   const { user } = useAuth()
+  const toast = useToast()
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
   const [form, setForm] = useState({ title: '', description: '', price: '' })
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState({})
@@ -25,20 +30,29 @@ export default function ListingsTab() {
     setBusy((b) => ({ ...b, [`${id}:${action}`]: value }))
   }
 
-  async function load() {
-    setLoading(true)
+  async function load(silent = false) {
+    if (!silent) setLoading(true)
     try {
       setListings(await api.getListings())
     } catch (err) {
-      setError(err.message)
+      if (!silent) setError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
+    if (mode === 'create') return
     load()
-  }, [])
+    const socket = getSocket()
+    if (!socket) return
+    function handleChanged(payload) {
+      if (payload.kind === 'listings') load(true)
+    }
+    socket.on('listing:changed', handleChanged)
+    return () => socket.off('listing:changed', handleChanged)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -52,7 +66,8 @@ export default function ListingsTab() {
         price: Number(form.price),
       })
       setForm({ title: '', description: '', price: '' })
-      await load()
+      toast('Ilan verildi! 🎉')
+      onPosted?.()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -64,10 +79,16 @@ export default function ListingsTab() {
     if (isBusy(id, 'sold')) return
     setError('')
     setItemBusy(id, 'sold', true)
+
+    // Satilan ilan "satista" listesinde gorunmeyecek, direkt cikar.
+    const prevListings = listings
+    setListings((prev) => prev.filter((l) => l.id !== id))
+
     try {
       await api.markSold(id)
-      await load()
+      toast('Satildi olarak isaretlendi.')
     } catch (err) {
+      setListings(prevListings)
       setError(err.message)
     } finally {
       setItemBusy(id, 'sold', false)
@@ -78,18 +99,23 @@ export default function ListingsTab() {
     if (isBusy(id, 'cancel')) return
     setError('')
     setItemBusy(id, 'cancel', true)
+
+    const prevListings = listings
+    setListings((prev) => prev.filter((l) => l.id !== id))
+
     try {
       await api.cancelListing(id)
-      await load()
+      toast('Ilan kaldirildi.')
     } catch (err) {
+      setListings(prevListings)
       setError(err.message)
     } finally {
       setItemBusy(id, 'cancel', false)
     }
   }
 
-  return (
-    <div className="tab-content">
+  if (mode === 'create') {
+    return (
       <section className="new-item-card">
         <h2>Ikinci el esya sat</h2>
         <form onSubmit={handleCreate} className="inline-form">
@@ -112,20 +138,41 @@ export default function ListingsTab() {
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
+          {error && <p className="form-error">{error}</p>}
           <button className="btn-primary" type="submit" disabled={creating}>
             {creating ? 'Ilan Veriliyor...' : 'Ilan Ver'}
           </button>
         </form>
       </section>
+    )
+  }
 
+  const visibleListings = search
+    ? listings.filter((l) => l.title.toLowerCase().includes(search.toLowerCase()))
+    : listings
+
+  return (
+    <div className="tab-content">
+      {listings.length > 0 && (
+        <input
+          className="search-box"
+          placeholder="Esya ara..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      )}
       {error && <p className="form-error">{error}</p>}
       {loading ? (
-        <p className="muted">Yukleniyor...</p>
-      ) : listings.length === 0 ? (
-        <EmptyState kind="box" title="Su an satista esya yok." subtitle="Ilk esyani satan sen ol!" />
+        <SkeletonList />
+      ) : visibleListings.length === 0 ? (
+        <EmptyState
+          kind="box"
+          title={search ? 'Aramana uyan esya yok.' : 'Su an satista esya yok.'}
+          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk esyani sen sat!'}
+        />
       ) : (
         <ul className="card-list">
-          {listings.map((l) => (
+          {visibleListings.map((l) => (
             <li key={l.id} className="card">
               <div className="feed-card-header">
                 <Avatar name={l.user?.name} size={28} />
