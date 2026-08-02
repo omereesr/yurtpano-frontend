@@ -107,15 +107,21 @@ export default function MessagesTab({ onNavigate }) {
       ) : (
         <ul className="card-list">
           {list.map((c) => (
-            <li key={c.id} className="card" onClick={() => setActiveId(c.id)} style={{ cursor: 'pointer' }}>
+            <li
+              key={c.id}
+              className={c.unread ? 'card conversation-unread' : 'card'}
+              onClick={() => setActiveId(c.id)}
+              style={{ cursor: 'pointer' }}
+            >
               {c.contextTitle && (
                 <div className="card-tag">
                   {CONTEXT_LABELS[c.contextType] || 'Ilan'}: {c.contextTitle}
                 </div>
               )}
               <div className="feed-card-header" style={{ marginTop: 6 }}>
+                {c.unread && <span className="unread-dot" title="Okunmadi" />}
                 <Avatar name={c.otherUser?.name} size={28} isSystem={c.otherUser?.isSystem} />
-                <h3 style={{ margin: 0 }}>
+                <h3 style={{ margin: 0 }} className={c.unread ? 'conversation-unread-title' : ''}>
                   {c.otherUser?.isSystem ? (
                     c.otherUser?.name
                   ) : (
@@ -123,7 +129,11 @@ export default function MessagesTab({ onNavigate }) {
                   )}
                 </h3>
               </div>
-              {c.lastMessage && <p className="card-note">{c.lastMessage.body}</p>}
+              {c.lastMessage && (
+                <p className={c.unread ? 'card-note conversation-unread-preview' : 'card-note'}>
+                  {c.lastMessage.body}
+                </p>
+              )}
               {view === 'istekler' && <RequestActions conversationId={c.id} onDone={load} />}
             </li>
           ))}

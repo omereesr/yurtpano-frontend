@@ -129,6 +129,15 @@ body {
 .tab-icon {
   font-size: 1.2rem;
 }
+.tab-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.tab-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+}
 
 .app-main {
   flex: 1;
@@ -980,4 +989,24 @@ select:focus {
   background: var(--card-bg);
   color: var(--ink);
   margin-bottom: 14px;
+}
+
+/* --- Okunmamis sohbet vurgusu --- */
+.conversation-unread {
+  border-left: 3px solid var(--accent-teal);
+  background: color-mix(in srgb, var(--accent-teal) 6%, var(--card-bg));
+}
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-urgent);
+  flex-shrink: 0;
+}
+.conversation-unread-title {
+  font-weight: 700;
+}
+.conversation-unread-preview {
+  color: var(--ink);
+  font-weight: 600;
 }

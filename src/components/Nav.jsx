@@ -1,5 +1,6 @@
 import ThemeToggle from './ThemeToggle'
 import UserMenu from './UserMenu'
+import useUnreadCount from '../hooks/useUnreadCount'
 
 const TABS = [
   { key: 'feed', label: 'Akis', icon: '🏠' },
@@ -10,6 +11,7 @@ const TABS = [
 
 export default function Nav({ active, onChange, onLogout, userName, isAdmin }) {
   const tabs = isAdmin ? [...TABS, { key: 'admin', label: 'Yonetim', icon: '🛠️' }] : TABS
+  const unread = useUnreadCount()
 
   return (
     <>
@@ -30,7 +32,12 @@ export default function Nav({ active, onChange, onLogout, userName, isAdmin }) {
             className={active === t.key ? 'tab active' : 'tab'}
             onClick={() => onChange(t.key)}
           >
-            <span className="tab-icon">{t.icon}</span>
+            <span className="tab-icon-wrap">
+              <span className="tab-icon">{t.icon}</span>
+              {t.key === 'messages' && unread > 0 && (
+                <span className="notification-badge tab-badge">{unread > 9 ? '9+' : unread}</span>
+              )}
+            </span>
             <span>{t.label}</span>
           </button>
         ))}

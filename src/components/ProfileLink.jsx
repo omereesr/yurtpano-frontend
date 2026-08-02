@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import MessageButton from './MessageButton'
 import Avatar from './Avatar'
@@ -85,6 +86,7 @@ function StarRating({ userId, ratingAverage, ratingCount, myRating, onRated }) {
 }
 
 function ProfileModal({ userId, onClose }) {
+  const { user: me } = useAuth()
   const [profile, setProfile] = useState(null)
   const [error, setError] = useState('')
 
@@ -94,6 +96,8 @@ function ProfileModal({ userId, onClose }) {
       .then(setProfile)
       .catch((err) => setError(err.message))
   }, [userId])
+
+  const isOwnProfile = profile && me && profile.id === me.id
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -156,18 +160,30 @@ function ProfileModal({ userId, onClose }) {
               </div>
             )}
 
-            <StarRating
-              userId={profile.id}
-              ratingAverage={profile.ratingAverage}
-              ratingCount={profile.ratingCount}
-              myRating={profile.myRating}
-              onRated={(result) => setProfile((p) => ({ ...p, ...result }))}
-            />
-
-            <div style={{ marginTop: 14 }} className="card-actions">
-              <MessageButton toUserId={profile.id} />
-              <ReportButton reportedUserId={profile.id} contextType="user" />
-            </div>
+            {isOwnProfile ? (
+              // Kendi profilin: puan VEREMEZSIN, sadece aldigin puanin
+              // ozetini goruyorsun. Mesaj/sikayet de anlamsiz, gizliyoruz.
+              <p className="rating-summary" style={{ marginTop: 10 }}>
+                ⭐{' '}
+                {profile.ratingCount > 0
+                  ? `${profile.ratingAverage.toFixed(1)} (${profile.ratingCount} degerlendirme)`
+                  : 'Henuz puan almadin'}
+              </p>
+            ) : (
+              <>
+                <StarRating
+                  userId={profile.id}
+                  ratingAverage={profile.ratingAverage}
+                  ratingCount={profile.ratingCount}
+                  myRating={profile.myRating}
+                  onRated={(result) => setProfile((p) => ({ ...p, ...result }))}
+                />
+                <div style={{ marginTop: 14 }} className="card-actions">
+                  <MessageButton toUserId={profile.id} />
+                  <ReportButton reportedUserId={profile.id} contextType="user" />
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

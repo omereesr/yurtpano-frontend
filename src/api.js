@@ -15,15 +15,27 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     if (token) headers.Authorization = `Bearer ${token}`
   }
 
+  // Backend beklenmedik bir sebeple hic cevap donmezse (orn. sunucuda
+  // yakalanmamis bir hata) istek sonsuza kadar "Yukleniyor..." durumunda
+  // kalmasin diye 15 saniyelik bir zaman asimi koyuyoruz.
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15000)
+
   let res
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     })
   } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Sunucu cevap vermedi (zaman asimi). Tekrar dene.')
+    }
     throw new Error('Backend\'e ulasilamiyor. "npm run dev" ile calistigindan emin ol (localhost:3000).')
+  } finally {
+    clearTimeout(timeoutId)
   }
 
   const data = await res.json().catch(() => ({}))

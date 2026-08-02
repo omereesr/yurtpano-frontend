@@ -1,45 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { api } from '../api'
-import { getSocket } from '../socket'
 import Avatar from './Avatar'
 
-// Ust bardaki kendi avatarimiz: tiklayinca "Profilim" ve "Mesajlar"a
-// (okunmamis sayisiyla birlikte) goturen kucuk bir menu acilir. Boylece
-// bu iki sekme alt navigasyon barinda yer kaplamiyor.
+// Ust bardaki kendi avatarimiz: tiklayinca "Profilim" ve "Cikis"a goturen
+// kucuk bir menu acilir. Mesajlar artik alt navigasyon barinda oldugu icin
+// burada tekrar etmiyoruz (bildirim rozeti de Mesajlar sekmesinin ustunde).
 export default function UserMenu({ userName, onNavigate, onLogout }) {
   const [open, setOpen] = useState(false)
-  const [unread, setUnread] = useState(0)
   const menuRef = useRef(null)
 
-  async function refreshUnread() {
-    try {
-      const { unread } = await api.messages.getUnreadCount()
-      setUnread(unread)
-    } catch {
-      // sessizce yoksay - kritik bir ozellik degil
-    }
-  }
-
-  useEffect(() => {
-    refreshUnread()
-    const socket = getSocket()
-    if (socket) {
-      socket.on('message:new', refreshUnread)
-      socket.on('conversation:new', refreshUnread)
-    }
-    // Bir konusma acilip "okundu" isaretlendiginde (MessagesTab tarafindan
-    // yayinlanir) rozeti F5 atmadan aninda guncelle.
-    window.addEventListener('yurtpano:messages-read', refreshUnread)
-    return () => {
-      if (socket) {
-        socket.off('message:new', refreshUnread)
-        socket.off('conversation:new', refreshUnread)
-      }
-      window.removeEventListener('yurtpano:messages-read', refreshUnread)
-    }
-  }, [])
-
-  // Menu disina tiklayinca kapat
   useEffect(() => {
     if (!open) return
     function handleClickOutside(e) {
@@ -57,10 +25,7 @@ export default function UserMenu({ userName, onNavigate, onLogout }) {
   return (
     <div className="user-menu" ref={menuRef}>
       <button type="button" className="user-menu-trigger" onClick={() => setOpen((o) => !o)}>
-        <span className="avatar-badge-wrap">
-          <Avatar name={userName} size={32} />
-          {unread > 0 && <span className="notification-badge avatar-badge">{unread > 9 ? '9+' : unread}</span>}
-        </span>
+        <Avatar name={userName} size={32} />
         <span className="top-bar-username">{userName}</span>
       </button>
 
