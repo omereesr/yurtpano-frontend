@@ -96,11 +96,8 @@ yanindaki menude (⋮) "Ana ekrana ekle" secenegi cikmali.
 
 ## Sonraki adimlar (frontend tarafinda)
 
-1. **Gercek push bildirimleri**: PWA temeli hazir (`sw.js` icinde `push`/
-   `notificationclick` dinleyicileri dormant halde duruyor), ama gercek
-   bildirim gonderebilmek icin: VAPID anahtar cifti, kullanicinin
-   aboneligini (subscription) veritabaninda saklama, ve backend'in ilgili
-   olaylarda (yeni mesaj, birisi ilana katildi vb.) push gondermesi
-   gerekiyor. Ayri bir is turu.
-2. Mesajlarda "okundu" bilgisi - zaten eklendi (bkz. onceki notlar).
-3. Gercek profil fotografi yukleme (su an sadece bas harf avatari).
+1. **Gercek push bildirimleri**: artik TAMAMLANDI ✓ - Profilim > Hesap &
+   Guvenlik > "Push Bildirimlerini Ac" ile telefon kilitliyken de bildirim
+   alabiliyorsun (`src/push.js`). Bir cihazda birden fazla tarayici/cihazdan
+   ayri ayri acabilirsin, hepsine ayni anda gider.
+2. Gercek profil fotografi yukleme (su an sadece bas harf avatari).

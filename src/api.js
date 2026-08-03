@@ -132,4 +132,10 @@ export const api = {
   reports: {
     create: (payload) => request('/reports', { method: 'POST', body: payload }),
   },
+
+  push: {
+    getVapidKey: () => request('/push/vapid-public-key', { auth: false }),
+    subscribe: (subscription) => request('/push/subscribe', { method: 'POST', body: subscription }),
+    unsubscribe: (endpoint) => request('/push/unsubscribe', { method: 'POST', body: { endpoint } }),
+  },
 }

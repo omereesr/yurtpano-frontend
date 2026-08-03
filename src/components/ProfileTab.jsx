@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import VerifiedBadge from './VerifiedBadge'
+import { enablePushNotifications, disablePushNotifications, isPushEnabled } from '../push'
 
 function monthsSince(dateStr) {
   const start = new Date(dateStr)
@@ -223,6 +224,32 @@ function SecuritySection({ profile, onSaved, onLogout }) {
   const [dmNotifications, setDmNotifications] = useState(profile.dmNotifications)
   const [notifSaving, setNotifSaving] = useState(false)
 
+  const [pushEnabled, setPushEnabled] = useState(null) // null = henuz kontrol edilmedi
+  const [pushSaving, setPushSaving] = useState(false)
+  const [pushError, setPushError] = useState('')
+
+  useEffect(() => {
+    isPushEnabled().then(setPushEnabled)
+  }, [])
+
+  async function handlePushToggle() {
+    setPushSaving(true)
+    setPushError('')
+    try {
+      if (pushEnabled) {
+        await disablePushNotifications()
+        setPushEnabled(false)
+      } else {
+        await enablePushNotifications()
+        setPushEnabled(true)
+      }
+    } catch (err) {
+      setPushError(err.message)
+    } finally {
+      setPushSaving(false)
+    }
+  }
+
   const [deactivatePassword, setDeactivatePassword] = useState('')
   const [deactivateErr, setDeactivateErr] = useState('')
   const [deactivating, setDeactivating] = useState(false)
@@ -350,6 +377,25 @@ function SecuritySection({ profile, onSaved, onLogout }) {
             {notifSaving ? 'Kaydediliyor...' : dmNotifications ? 'DM Bildirimleri: Acik' : 'DM Bildirimleri: Kapali'}
           </button>
         </div>
+        <p className="muted" style={{ marginTop: 12, marginBottom: 6 }}>
+          Uygulama kapaliyken/telefon kilitliyken de bildirim almak icin:
+        </p>
+        <div className="card-actions" style={{ marginTop: 0 }}>
+          <button
+            className="btn-secondary"
+            disabled={pushSaving || pushEnabled === null}
+            onClick={handlePushToggle}
+          >
+            {pushSaving
+              ? 'Bekleyin...'
+              : pushEnabled === null
+                ? 'Kontrol ediliyor...'
+                : pushEnabled
+                  ? 'Push Bildirimleri: Acik ✓'
+                  : 'Push Bildirimlerini Ac'}
+          </button>
+        </div>
+        {pushError && <p className="form-error">{pushError}</p>}
       </div>
 
       <div className="new-item-card">
