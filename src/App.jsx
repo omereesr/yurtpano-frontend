@@ -11,6 +11,7 @@ import MessagesTab from './components/MessagesTab'
 import ProfileTab from './components/ProfileTab'
 import ThemeToggle from './components/ThemeToggle'
 import InstallPrompt from './components/InstallPrompt'
+import PushPrompt from './components/PushPrompt'
 
 const LISTING_KINDS = ['orders', 'requests', 'rides', 'listings']
 
@@ -60,6 +61,7 @@ function Shell() {
       />
       <main className="app-main">
         <InstallPrompt />
+        <PushPrompt />
         {active === 'feed' && <FeedTab onNavigate={handleNavigate} />}
         {active === 'listings' && (
           <ListingsHub category={listingsCategory} onCategoryChange={setListingsCategory} />

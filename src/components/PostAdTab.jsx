@@ -19,11 +19,11 @@ export default function PostAdTab({ onPosted }) {
 
   return (
     <div className="tab-content">
-      <div className="admin-subnav">
+      <div className="category-grid">
         {CATEGORIES.map((c) => (
           <button
             key={c.key}
-            className={category === c.key ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
+            className={category === c.key ? 'category-grid-btn active' : 'category-grid-btn'}
             onClick={() => setCategory(c.key)}
           >
             {c.icon} {c.label}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import { getSocket } from '../socket'
@@ -182,6 +182,15 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
   const [sending, setSending] = useState(false)
   const [otherTyping, setOtherTyping] = useState(false)
   const [otherLastReadAt, setOtherLastReadAt] = useState(null)
+  const threadRef = useRef(null)
+
+  // Mesaj listesi degistikce (ilk yuklenme, yeni mesaj gelince/gonderilince)
+  // WhatsApp/Instagram gibi otomatik olarak EN ALTA (en yeni mesaja) kay.
+  useEffect(() => {
+    if (threadRef.current) {
+      threadRef.current.scrollTop = threadRef.current.scrollHeight
+    }
+  }, [data?.messages?.length, otherTyping])
 
   async function load() {
     try {
@@ -305,7 +314,7 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
         </div>
       )}
 
-      <div className="message-thread">
+      <div className="message-thread" ref={threadRef}>
         {data.messages.map((m) => (
           <div key={m.id} className={m.senderId === user.id ? 'message-bubble mine' : 'message-bubble'}>
             <p>{m.body}</p>

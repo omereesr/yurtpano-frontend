@@ -339,6 +339,31 @@ select:focus {
   background: rgba(47, 111, 94, 0.08);
 }
 
+/* --- Ilanlar / Ilan Ver: 4 kategori HER ZAMAN 2x2 (2 ust, 2 alt) -
+   flex-wrap gibi genislige gore 3+1 bolunmesin diye grid kullaniyoruz. --- */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.category-grid-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  padding: 10px 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 10px;
+  text-align: center;
+}
+.category-grid-btn.active {
+  color: var(--accent-teal);
+  background: rgba(47, 111, 94, 0.1);
+  border-color: var(--accent-teal);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -386,6 +411,13 @@ select:focus {
   max-height: 360px;
   overflow-y: auto;
   padding: 4px 0;
+  /* Kaydirma cubugunu gizle - kaydirma islevi calismaya devam ediyor,
+     sadece gorsel olarak cubuk gorunmuyor (WhatsApp/Instagram gibi). */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* eski Edge/IE */
+}
+.message-thread::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/yeni Edge */
 }
 .message-bubble {
   align-self: flex-start;
