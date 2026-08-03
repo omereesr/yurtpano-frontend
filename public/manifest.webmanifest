@@ -1,0 +1,18 @@
+{
+  "name": "YurtPano - Yurt Dayanisma Agi",
+  "short_name": "YurtPano",
+  "description": "Ayni yurttaki ogrencilerin ortak siparis, sosyallesme, yolculuk ve ikinci el ilanlarini paylastigi dayanisma agi.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f4ef",
+  "theme_color": "#2f6f5e",
+  "lang": "tr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
