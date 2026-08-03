@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import AuthScreen from './components/AuthScreen'
@@ -18,6 +18,15 @@ function Shell() {
   const { user, logout } = useAuth()
   const [active, setActive] = useState('feed')
   const [listingsCategory, setListingsCategory] = useState('orders')
+
+  // Shell, cikis/giris arasinda AYNI React bilesen orneginde kaliyor -
+  // yani "active" state'i cikis yapmadan onceki sekmeyi hatirlamaya devam
+  // ediyordu (orn. Yonetim'deyken cikis yapip baska hesapla girince hala
+  // Yonetim'e dusmeye calisiyordu). Her basarili giriste Akis'a resetliyoruz.
+  useEffect(() => {
+    if (user) setActive('feed')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   // Feed'deki veya bir mesajdaki "ilana git" linkleri 'orders'/'requests'/
   // 'rides'/'listings' gibi kategori isimleriyle gelir - bunlari otomatik

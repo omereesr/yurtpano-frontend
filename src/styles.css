@@ -40,12 +40,22 @@ body,
 #root {
   height: 100%;
 }
+html {
+  /* Mobil tarayicilarda kenardan sag/sol kaydirinca cikan "geri/ileri git"
+     gri cubuklarini ve sayfayi yukari/asagi asiri kaydirinca olusan
+     "rubber-band" bosluk/cubuklarini tamamen kapatiyoruz. */
+  overscroll-behavior: none;
+}
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  /* Sadece dikey (yukari/asagi) kaydirmaya izin ver - yatay (sag/sol)
+     kaydirma jesti (browser'in "sayfada geri git" hareketi) tamamen kapali. */
+  touch-action: pan-y;
 }
 
 .app-shell {
@@ -306,10 +316,12 @@ select:focus {
 
 .admin-subnav {
   display: flex;
+  flex-wrap: wrap; /* siga, kaymasin - gerekirse alt satira gecsin */
   gap: 8px;
   margin-bottom: 18px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 4px;
+  overflow-x: hidden;
 }
 .admin-subnav-btn {
   background: none;
@@ -320,6 +332,7 @@ select:focus {
   color: var(--ink-soft);
   cursor: pointer;
   border-radius: 8px 8px 0 0;
+  white-space: nowrap;
 }
 .admin-subnav-btn.active {
   color: var(--accent-teal);
@@ -848,6 +861,10 @@ select:focus {
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+  }
+  .admin-subnav-btn {
+    padding: 6px 9px;
+    font-size: 0.78rem;
   }
 }
 
