@@ -21,7 +21,7 @@ export default function AuthScreen() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // OTP akisi icin ayri durum: telefon dogrulanana kadar formun geri kalani
+  // OTP akisi icin ayri durum: e-posta dogrulanana kadar formun geri kalani
   // gizli kalir, kullanici once "Kod Gonder"e basar.
   const [otpSent, setOtpSent] = useState(false)
   const [otpSending, setOtpSending] = useState(false)
@@ -38,17 +38,21 @@ export default function AuthScreen() {
     setForm((f) => ({ ...f, [field]: value }))
   }
 
+  // Basit bir e-posta format kontrolu - "Kod Gonder" butonunu ne zaman
+  // aktif edecegimizi bilmek icin (asil dogrulama backend'de yapiliyor).
+  const emailLooksValid = /\S+@\S+\.\S+/.test(form.email)
+
   async function handleSendOtp() {
-    if (form.phone.length < 10 || otpSending) return
+    if (!emailLooksValid || otpSending) return
     setError('')
     setOtpSending(true)
     try {
-      const res = await api.requestOtp(form.phone)
+      const res = await api.requestOtp(form.email)
       setOtpSent(true)
       setOtpInfo(
         res.devCode
-          ? `Gelistirme modu: dogrulama kodu "${res.devCode}" (gercek SMS gonderilmedi)`
-          : 'Kod telefonuna gonderildi.'
+          ? `Gelistirme modu: dogrulama kodu "${res.devCode}" (gercek e-posta gonderilmedi)`
+          : 'Kod e-postana gonderildi (gelen kutunu/spam klasorunu kontrol et).'
       )
     } catch (err) {
       setError(err.message)
@@ -65,7 +69,7 @@ export default function AuthScreen() {
       if (mode === 'login') {
         await login(identifier, loginPassword)
       } else {
-        await register({ ...form, email: form.email || undefined })
+        await register(form)
       }
     } catch (err) {
       setError(err.message)
@@ -104,13 +108,13 @@ export default function AuthScreen() {
           {mode === 'register' ? (
             <>
               <label>
-                Telefon
+                E-posta
                 <input
-                  value={form.phone}
-                  onChange={(e) => update('phone', e.target.value)}
-                  placeholder="5551112233"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => update('email', e.target.value)}
+                  placeholder="ornek@gmail.com"
                   required
-                  minLength={10}
                   disabled={otpSent}
                 />
               </label>
@@ -119,7 +123,7 @@ export default function AuthScreen() {
                 <button
                   type="button"
                   className="btn-secondary"
-                  disabled={form.phone.length < 10 || otpSending}
+                  disabled={!emailLooksValid || otpSending}
                   onClick={handleSendOtp}
                 >
                   {otpSending ? 'Gonderiliyor...' : 'Dogrulama Kodu Gonder'}
@@ -128,7 +132,7 @@ export default function AuthScreen() {
                 <>
                   {otpInfo && <p className="card-note">{otpInfo}</p>}
                   <label>
-                    SMS ile Gelen Kod
+                    E-postaya Gelen Kod
                     <input
                       value={form.otpCode}
                       onChange={(e) => update('otpCode', e.target.value)}
@@ -146,6 +150,16 @@ export default function AuthScreen() {
                       onChange={(e) => update('name', e.target.value)}
                       required
                       minLength={2}
+                    />
+                  </label>
+                  <label>
+                    Telefon
+                    <input
+                      value={form.phone}
+                      onChange={(e) => update('phone', e.target.value)}
+                      placeholder="5551112233"
+                      required
+                      minLength={10}
                     />
                   </label>
                   <label>
@@ -174,15 +188,6 @@ export default function AuthScreen() {
                     <input value={form.roomNo} onChange={(e) => update('roomNo', e.target.value)} />
                   </label>
                   <label>
-                    E-posta (opsiyonel)
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => update('email', e.target.value)}
-                      placeholder="ornek@ogr.edu.tr"
-                    />
-                  </label>
-                  <label>
                     Sifre
                     <input
                       type="password"
@@ -202,7 +207,7 @@ export default function AuthScreen() {
                 <input
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="5551112233 ya da ornek@ogr.edu.tr"
+                  placeholder="5551112233 ya da ornek@gmail.com"
                   required
                   minLength={3}
                 />

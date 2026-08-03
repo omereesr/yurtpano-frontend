@@ -178,7 +178,7 @@ export default function ListingsTab({ mode = 'browse', onPosted }) {
                 <Avatar name={l.user?.name} size={28} />
                 <span className="card-meta">
                   <ProfileLink userId={l.user?.id} name={l.user?.name} />
-                  {l.user?.phoneVerified && <VerifiedBadge />}
+                  {l.user?.emailVerified && <VerifiedBadge />}
                   {l.user?.roomNo ? ` - Oda ${l.user.roomNo}` : ''}
                 </span>
                 <div className="card-tag">Ikinci El</div>

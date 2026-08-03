@@ -231,7 +231,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                   <Avatar name={r.owner?.name} size={28} />
                   <span className="card-meta">
                     <ProfileLink userId={r.owner?.id} name={r.owner?.name} />
-                    {r.owner?.phoneVerified && <VerifiedBadge />}
+                    {r.owner?.emailVerified && <VerifiedBadge />}
                   </span>
                   <div className="card-tag">Yolculuk</div>
                 </div>

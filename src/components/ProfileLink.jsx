@@ -115,7 +115,7 @@ function ProfileModal({ userId, onClose }) {
               <Avatar name={profile.name} size={48} />
               <div>
                 <h2 style={{ margin: 0 }}>
-                  {profile.name} {profile.phoneVerified && <VerifiedBadge />}
+                  {profile.name} {profile.emailVerified && <VerifiedBadge />}
                 </h2>
                 <p className="card-meta" style={{ margin: '2px 0 0' }}>
                   {monthsSince(profile.createdAt)}

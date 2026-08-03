@@ -113,7 +113,7 @@ function FeedCard({ item, onNavigate }) {
         <div>
           <span className="card-meta">
             <ProfileLink userId={owner?.id} name={owner?.name} />
-            {owner?.phoneVerified && <VerifiedBadge />}
+            {owner?.emailVerified && <VerifiedBadge />}
           </span>
         </div>
         <span className="card-tag feed-kind-tag">

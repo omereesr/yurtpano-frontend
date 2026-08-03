@@ -28,7 +28,9 @@ Terminalde cikan adresi (genelde `http://localhost:5173`) tarayicida ac.
 
 ## Ekranlar
 
-- **Giris / Kayit**: telefon + SMS OTP dogrulama + yurt secimi + sifre.
+- **Giris / Kayit**: e-posta OTP dogrulama + telefon + yurt secimi + sifre
+  (dogrulama kanali artik SMS degil e-posta - Turkiye SMS saglayicilarinin
+  sirket/e-imza sartlarindan kacinmak icin).
 - **Ortak Siparis**: kisi KAPASITESI bazli (TL degil) siparis ac, katil/ayril,
   kontenjan doldukca otomatik kapanir. Katilanlarin profili gorunur.
 - **Sosyallesme**: esya/ders notu/calisma arkadasi/etkinlik-oyun kategorilerinde

@@ -56,7 +56,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
 export const api = {
   getDorms: () => request('/dorms', { auth: false }),
-  requestOtp: (phone) => request('/auth/request-otp', { method: 'POST', body: { phone }, auth: false }),
+  requestOtp: (email) => request('/auth/request-otp', { method: 'POST', body: { email }, auth: false }),
   register: (payload) => request('/auth/register', { method: 'POST', body: payload, auth: false }),
   login: (identifier, password) => request('/auth/login', { method: 'POST', body: { identifier, password }, auth: false }),
 

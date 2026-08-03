@@ -44,7 +44,7 @@ export default function ProfileTab() {
     <div className="tab-content">
       <div className="new-item-card profile-header-card">
         <h2 style={{ marginTop: 0 }}>
-          {profile.name} {profile.phoneVerified && <VerifiedBadge />}
+          {profile.name} {profile.emailVerified && <VerifiedBadge />}
         </h2>
         <p className="card-meta">{monthsSince(profile.createdAt)}</p>
         {profile.tags && (

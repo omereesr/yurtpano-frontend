@@ -181,7 +181,7 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
                 <Avatar name={r.user?.name} size={28} />
                 <span className="card-meta">
                   <ProfileLink userId={r.user?.id} name={r.user?.name} />
-                  {r.user?.phoneVerified && <VerifiedBadge />}
+                  {r.user?.emailVerified && <VerifiedBadge />}
                   {r.user?.roomNo ? ` - Oda ${r.user.roomNo}` : ''}
                 </span>
                 <div className={r.type === 'esya' ? 'card-tag urgent' : 'card-tag'}>

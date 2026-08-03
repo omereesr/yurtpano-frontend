@@ -243,7 +243,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                   <Avatar name={o.owner?.name} size={28} />
                   <span className="card-meta">
                     <ProfileLink userId={o.owner?.id} name={o.owner?.name} />
-                    {o.owner?.phoneVerified && <VerifiedBadge />}
+                    {o.owner?.emailVerified && <VerifiedBadge />}
                     {o.owner?.roomNo ? ` - Oda ${o.owner.roomNo}` : ''}
                   </span>
                   <div className="card-tag">Ortak Siparis</div>
