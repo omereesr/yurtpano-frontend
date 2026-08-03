@@ -1,1 +1,15 @@
+# Ortam degiskenleri - GIZLI bilgiler icerebilir
+.env
+.env.local
+
+# Bagimliliklar ve build ciktilari
 node_modules/
+dist/
+
+# Loglar
+npm-debug.log*
+*.log
+
+# Isletim sistemi dosyalari
+.DS_Store
+Thumbs.db

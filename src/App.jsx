@@ -35,7 +35,7 @@ function Shell() {
   function handleNavigate(target) {
     if (LISTING_KINDS.includes(target)) {
       setListingsCategory(target)
-      setActive('listings')
+      setActive('ilanlar')
     } else {
       setActive(target)
     }
@@ -63,7 +63,7 @@ function Shell() {
         <InstallPrompt />
         <PushPrompt />
         {active === 'feed' && <FeedTab onNavigate={handleNavigate} />}
-        {active === 'listings' && (
+        {active === 'ilanlar' && (
           <ListingsHub category={listingsCategory} onCategoryChange={setListingsCategory} />
         )}
         {active === 'post' && <PostAdTab onPosted={(category) => handleNavigate(category)} />}

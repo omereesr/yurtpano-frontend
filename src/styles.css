@@ -651,13 +651,28 @@ select:focus {
   color: var(--ink-soft);
   font-weight: 600;
 }
-.auth-form input {
+.auth-form input,
+.auth-form select {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   font-size: 0.9rem;
   font-family: var(--font-body);
   color: var(--ink);
+  background: var(--paper);
+}
+
+/* Tarayicilar otomatik doldurulan (autofill) alanlara kendi beyaz/sari
+   arka planini ZORLA uygular, normal CSS bunu ezemez - bu ozel "trick"
+   (ic golge/inset shadow ile arka plani boyamak) gerekiyor. Aksi halde
+   karanlik modda otomatik doldurulan alanlarda beyaz zemin + acik renk
+   yazi yuzunden metin okunmaz hale geliyordu. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--paper) inset !important;
+  -webkit-text-fill-color: var(--ink) !important;
+  caret-color: var(--ink);
 }
 
 /* --- Avatar --- */

@@ -4,7 +4,7 @@ import useUnreadCount from '../hooks/useUnreadCount'
 
 const TABS = [
   { key: 'feed', label: 'Akis', icon: '🏠' },
-  { key: 'listings', label: 'Ilanlar', icon: '📋' },
+  { key: 'ilanlar', label: 'Ilanlar', icon: '📋' },
   { key: 'post', label: 'Ilan Ver', icon: '➕' },
   { key: 'messages', label: 'Mesajlar', icon: '💬' },
 ]
