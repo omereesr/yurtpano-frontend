@@ -66,6 +66,7 @@ export const api = {
   leaveOrder: (id) => request(`/orders/${id}/leave`, { method: 'POST' }),
   closeOrder: (id) => request(`/orders/${id}/close`, { method: 'POST' }),
   cancelOrder: (id) => request(`/orders/${id}/cancel`, { method: 'POST' }),
+  removeOrderParticipant: (id, userId) => request(`/orders/${id}/participants/${userId}/remove`, { method: 'POST' }),
 
   getRequests: (dormId) => request(dormId ? `/requests?dormId=${dormId}` : '/requests'),
   createRequest: (payload) => request('/requests', { method: 'POST', body: payload }),
@@ -77,6 +78,7 @@ export const api = {
   joinRide: (id) => request(`/rides/${id}/join`, { method: 'POST' }),
   leaveRide: (id) => request(`/rides/${id}/leave`, { method: 'POST' }),
   cancelRide: (id) => request(`/rides/${id}/cancel`, { method: 'POST' }),
+  removeRideParticipant: (id, userId) => request(`/rides/${id}/participants/${userId}/remove`, { method: 'POST' }),
 
   getListings: (dormId) => request(dormId ? `/listings?dormId=${dormId}` : '/listings'),
   createListing: (payload) => request('/listings', { method: 'POST', body: payload }),

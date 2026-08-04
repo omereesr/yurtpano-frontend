@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar'
 
-// Ust bardaki kendi avatarimiz: tiklayinca "Profilim" ve "Cikis"a goturen
-// kucuk bir menu acilir. Mesajlar artik alt navigasyon barinda oldugu icin
+// Ust bardaki kendi avatarimiz: tiklayinca "Profilim" ve "Çıkış"a goturen
+// kucuk bir menu acilir. Mesajlar artik alt navigasyon barinda oldugu için
 // burada tekrar etmiyoruz (bildirim rozeti de Mesajlar sekmesinin ustunde).
 export default function UserMenu({ userName, onNavigate, onLogout }) {
   const [open, setOpen] = useState(false)
@@ -36,7 +36,7 @@ export default function UserMenu({ userName, onNavigate, onLogout }) {
           </button>
           <div className="user-menu-divider" />
           <button type="button" className="user-menu-item user-menu-logout" onClick={onLogout}>
-            Cikis
+            Çıkış
           </button>
         </div>
       )}

@@ -1,5 +1,5 @@
 // Isme gore sabit (deterministik) bir renk secip bas harf(ler)i gosteren
-// kucuk yuvarlak avatar. Gercek bir fotograf yuklemesi olmadigi icin bu,
+// kucuk yuvarlak avatar. Gercek bir fotograf yuklemesi olmadigi için bu,
 // kartlarin "kim actı" hissini gucllendiren en ucuz/hizli cozum.
 const PALETTE = ['#2f6f5e', '#e2a33d', '#c1483b', '#3d6fa8', '#8a5fc7', '#c76f9e']
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { timeAgo } from '../utils/time'
+import { useToast } from '../context/ToastContext'
 
 export default function AdminTab() {
   const [section, setSection] = useState('stats')
@@ -29,7 +30,7 @@ export default function AdminTab() {
           </select>
         </label>
         <p className="muted" style={{ marginTop: 6, marginBottom: 0 }}>
-          Yonetici olarak diger yurtlardaki ilanlari/kullanicilari da gorebilirsin.
+          Yönetici olarak diger yurtlardaki ilanlari/kullanicilari da gorebilirsin.
         </p>
       </div>
 
@@ -44,13 +45,13 @@ export default function AdminTab() {
           className={section === 'users' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
           onClick={() => setSection('users')}
         >
-          Kullanicilar
+          Kullanıcılar
         </button>
         <button
           className={section === 'browse' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
           onClick={() => setSection('browse')}
         >
-          Ilanlar
+          İlanlar
         </button>
         <button
           className={section === 'dorms' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
@@ -88,15 +89,15 @@ function StatsSection({ dormId }) {
   }, [dormId])
 
   if (error) return <p className="form-error">{error}</p>
-  if (!stats) return <p className="muted">Yukleniyor...</p>
+  if (!stats) return <p className="muted">Yükleniyor...</p>
 
   const items = [
-    { label: 'Kayitli Kullanici', value: stats.userCount },
-    { label: 'Acik Ortak Siparis', value: stats.openOrders },
-    { label: 'Acik Ihtiyac Ilani', value: stats.openRequests },
-    { label: 'Acik Yolculuk', value: stats.openRides },
-    { label: 'Satistaki Ilan', value: stats.activeListings },
-    { label: 'Acik Sikayet', value: stats.openReports },
+    { label: 'Kayitli Kullanıcı', value: stats.userCount },
+    { label: 'Açık Ortak Siparis', value: stats.openOrders },
+    { label: 'Açık Ihtiyac Ilani', value: stats.openRequests },
+    { label: 'Açık Yolculuk', value: stats.openRides },
+    { label: 'Satistaki İlan', value: stats.activeListings },
+    { label: 'Açık Şikayet', value: stats.openReports },
   ]
 
   return (
@@ -160,27 +161,27 @@ function UsersSection({ dormId }) {
     }
   }
 
-  if (loading) return <p className="muted">Yukleniyor...</p>
+  if (loading) return <p className="muted">Yükleniyor...</p>
 
   return (
     <div>
       {error && <p className="form-error">{error}</p>}
       {users.length === 0 ? (
-        <p className="empty-state">Bu yurtta kayitli kullanici yok.</p>
+        <p className="empty-state">Bu yurtta kayitli kullanıcı yok.</p>
       ) : (
         <ul className="card-list">
           {users.map((u) => (
             <li key={u.id} className="card">
               <h3>
-                {u.name} {u.isAdmin && <span className="card-tag">Yonetici</span>}
+                {u.name} {u.isAdmin && <span className="card-tag">Yönetici</span>}
               </h3>
               <p className="card-meta">
                 {u.phone}
                 {u.email ? ` - ${u.email}` : ''}
                 {u.roomNo ? ` - Oda ${u.roomNo}` : ''}
               </p>
-              {u.banned && <p className="card-note">Bu kullanici askiya alinmis.</p>}
-              {u.active === false && <p className="card-note">Bu kullanici hesabini dondurmus.</p>}
+              {u.banned && <p className="card-note">Bu kullanıcı askiya alinmis.</p>}
+              {u.active === false && <p className="card-note">Bu kullanıcı hesabini dondurmus.</p>}
               {!u.isAdmin && (
                 <div className="card-actions">
                   <button
@@ -209,44 +210,69 @@ function UsersSection({ dormId }) {
   )
 }
 
-// Yonetici, secili yurdun tum ilanlarini (siparis/sosyallesme/yolculuk/
+// Yönetici, seçili yurdun tum ilanlarini (siparis/sosyallesme/yolculuk/
 // ikinci el) tek bir listede, salt-okunur olarak gezebilir. Amac katilim
-// degil moderasyon/genel bakis oldugu icin islem butonlari yok.
+// degil moderasyon/genel bakis oldugu için islem butonlari yok.
 function BrowseSection({ dormId }) {
+  const toast = useToast()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState({})
+
+  async function load() {
+    setLoading(true)
+    setError('')
+    try {
+      const [orders, requests, rides, listings] = await Promise.all([
+        api.getOrders(dormId),
+        api.getRequests(dormId),
+        api.getRides(dormId),
+        api.getListings(dormId),
+      ])
+      const merged = [
+        ...orders.map((o) => ({ kind: 'Ortak Sipariş', apiKind: 'orders', id: o.id, title: o.restaurant, sub: `${o.joinedCount}/${o.capacity} kişi`, owner: o.owner?.name, createdAt: o.createdAt })),
+        ...requests.map((r) => ({ kind: 'Sosyalleşme', apiKind: 'requests', id: r.id, title: r.title, sub: r.description, owner: r.user?.name, createdAt: r.createdAt })),
+        ...rides.map((r) => ({ kind: 'Yolculuk', apiKind: 'rides', id: r.id, title: r.destination, sub: `${r.seatsTaken}/${r.seatsTotal} koltuk`, owner: r.owner?.name, createdAt: r.createdAt })),
+        ...listings.map((l) => ({ kind: 'İkinci El', apiKind: 'listings', id: l.id, title: l.title, sub: `${l.price} TL`, owner: l.user?.name, createdAt: l.createdAt })),
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      setItems(merged)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function load() {
-      setLoading(true)
-      setError('')
-      try {
-        const [orders, requests, rides, listings] = await Promise.all([
-          api.getOrders(dormId),
-          api.getRequests(dormId),
-          api.getRides(dormId),
-          api.getListings(dormId),
-        ])
-        const merged = [
-          ...orders.map((o) => ({ kind: 'Ortak Siparis', id: o.id, title: o.restaurant, sub: `${o.joinedCount}/${o.capacity} kisi`, owner: o.owner?.name, createdAt: o.createdAt })),
-          ...requests.map((r) => ({ kind: 'Sosyallesme', id: r.id, title: r.title, sub: r.description, owner: r.user?.name, createdAt: r.createdAt })),
-          ...rides.map((r) => ({ kind: 'Yolculuk', id: r.id, title: r.destination, sub: `${r.seatsTaken}/${r.seatsTotal} koltuk`, owner: r.owner?.name, createdAt: r.createdAt })),
-          ...listings.map((l) => ({ kind: 'Ikinci El', id: l.id, title: l.title, sub: `${l.price} TL`, owner: l.user?.name, createdAt: l.createdAt })),
-        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        setItems(merged)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dormId])
 
-  if (loading) return <p className="muted">Yukleniyor...</p>
+  const DELETE_FN = {
+    orders: api.cancelOrder,
+    requests: api.cancelRequest,
+    rides: api.cancelRide,
+    listings: api.cancelListing,
+  }
+
+  async function handleDelete(item) {
+    const key = `${item.apiKind}-${item.id}`
+    setBusy((b) => ({ ...b, [key]: true }))
+    try {
+      await DELETE_FN[item.apiKind](item.id)
+      toast('İlan silindi.')
+      setItems((prev) => prev.filter((i) => !(i.apiKind === item.apiKind && i.id === item.id)))
+    } catch (err) {
+      toast(err.message, 'error')
+    } finally {
+      setBusy((b) => ({ ...b, [key]: false }))
+    }
+  }
+
+  if (loading) return <p className="muted">Yükleniyor...</p>
   if (error) return <p className="form-error">{error}</p>
-  if (items.length === 0) return <p className="empty-state">Bu yurtta acik ilan yok.</p>
+  if (items.length === 0) return <p className="empty-state">Bu yurtta açık ilan yok.</p>
 
   return (
     <ul className="card-list">
@@ -258,6 +284,15 @@ function BrowseSection({ dormId }) {
           <p className="card-meta">
             {item.owner} - {timeAgo(item.createdAt)}
           </p>
+          <div className="card-actions">
+            <button
+              className="btn-secondary"
+              disabled={busy[`${item.apiKind}-${item.id}`]}
+              onClick={() => handleDelete(item)}
+            >
+              {busy[`${item.apiKind}-${item.id}`] ? 'Bekleyin...' : 'İlanı Sil'}
+            </button>
+          </div>
         </li>
       ))}
     </ul>
@@ -346,7 +381,7 @@ function DormsSection() {
 
       {error && <p className="form-error">{error}</p>}
       {loading ? (
-        <p className="muted">Yukleniyor...</p>
+        <p className="muted">Yükleniyor...</p>
       ) : (
         <ul className="card-list">
           {dorms.map((d) => (
@@ -354,7 +389,7 @@ function DormsSection() {
               <h3>{d.name}</h3>
               <p className="card-meta">
                 {d.city ? `${d.city} - ` : ''}
-                {d.code} - {d._count?.users ?? 0} kullanici
+                {d.code} - {d._count?.users ?? 0} kullanıcı
               </p>
               <div className="card-actions">
                 <button
@@ -423,39 +458,39 @@ function ReportsSection({ dormId }) {
     }
   }
 
-  if (loading) return <p className="muted">Yukleniyor...</p>
+  if (loading) return <p className="muted">Yükleniyor...</p>
 
   return (
     <div>
       {error && <p className="form-error">{error}</p>}
       {reports.length === 0 ? (
-        <p className="empty-state">Henuz bir sikayet yok.</p>
+        <p className="empty-state">Henuz bir şikayet yok.</p>
       ) : (
         <ul className="card-list">
           {reports.map((r) => (
             <li key={r.id} className="card">
               <div className={r.status === 'open' ? 'card-tag urgent' : 'card-tag'}>
-                {r.status === 'open' ? 'Acik' : 'Cozuldu'}
+                {r.status === 'open' ? 'Açık' : 'Çözüldü'}
               </div>
               <h3>{r.reason}</h3>
               {r.details && <p className="card-note">{r.details}</p>}
               <p className="card-meta">
-                Sikayet eden: {r.reporter?.name || 'Bilinmiyor'}
+                Şikayet eden: {r.reporter?.name || 'Bilinmiyor'}
                 {r.reportedUser ? ` - Hakkinda: ${r.reportedUser.name}` : ''}
                 {r.contextType ? ` - Konu: ${r.contextType}` : ''}
               </p>
-              {r.reportedUser?.banned && <p className="card-note">Bu kullanici zaten banli.</p>}
+              {r.reportedUser?.banned && <p className="card-note">Bu kullanıcı zaten banli.</p>}
               <p className="card-meta">{new Date(r.createdAt).toLocaleString('tr-TR')}</p>
               <div className="card-actions">
                 <button
                   className="btn-secondary"
                   onClick={() => setOpenDetailId(openDetailId === r.id ? null : r.id)}
                 >
-                  {openDetailId === r.id ? 'Detayi Gizle' : 'Detayi Gor'}
+                  {openDetailId === r.id ? 'Detayı Gizle' : 'Detayı Gör'}
                 </button>
                 {r.status === 'open' && (
                   <button className="btn-secondary" disabled={busy[r.id]} onClick={() => resolve(r.id)}>
-                    {busy[r.id] ? 'Bekleyin...' : 'Cozuldu Isaretle'}
+                    {busy[r.id] ? 'Bekleyin...' : 'Çözüldü İşaretle'}
                   </button>
                 )}
                 {r.reportedUser && (
@@ -481,8 +516,8 @@ function ReportsSection({ dormId }) {
   )
 }
 
-// Sikayetin GERCEK icerigini gosterir - sadece sikayet edenin yazdigi
-// metni degil, sikayet edilen mesaj/ilan neyse onu.
+// Sikayetin GERCEK icerigini gosterir - sadece şikayet edenin yazdigi
+// metni degil, şikayet edilen mesaj/ilan neyse onu.
 function ReportDetail({ reportId }) {
   const [detail, setDetail] = useState(null)
   const [error, setError] = useState('')
@@ -495,10 +530,10 @@ function ReportDetail({ reportId }) {
   }, [reportId])
 
   if (error) return <p className="form-error">{error}</p>
-  if (!detail) return <p className="muted">Yukleniyor...</p>
+  if (!detail) return <p className="muted">Yükleniyor...</p>
 
   const { context } = detail
-  if (!context) return <p className="muted">Bu sikayet icin ek icerik yok (kullanici sikayeti olabilir).</p>
+  if (!context) return <p className="muted">Bu şikayet için ek icerik yok (kullanıcı sikayeti olabilir).</p>
 
   return (
     <div className="report-detail">
@@ -524,12 +559,12 @@ function ReportDetail({ reportId }) {
       )}
       {context.type === 'request' && context.data && (
         <p className="card-note">
-          Ilan: {context.data.title} ({context.data.user?.name})
+          İlan: {context.data.title} ({context.data.user?.name})
         </p>
       )}
       {context.type === 'listing' && context.data && (
         <p className="card-note">
-          Ilan: {context.data.title} - {context.data.price} TL ({context.data.user?.name})
+          İlan: {context.data.title} - {context.data.price} TL ({context.data.user?.name})
         </p>
       )}
     </div>

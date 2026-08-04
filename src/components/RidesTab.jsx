@@ -8,6 +8,7 @@ import ProfileLink from './ProfileLink'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
+import ParticipantsCard from './ParticipantsCard'
 import EmptyState from './EmptyState'
 import SkeletonList from './SkeletonList'
 import { timeAgo } from '../utils/time'
@@ -110,6 +111,37 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
     }
   }
 
+  async function handleRemoveParticipant(rideId, participantUserId) {
+    if (isBusy(rideId, 'remove')) return
+    setError('')
+    setItemBusy(rideId, 'remove', true)
+
+    const prevRides = rides
+    setRides((prev) =>
+      prev.map((r) =>
+        r.id === rideId
+          ? {
+              ...r,
+              seatsTaken: Math.max(1, r.seatsTaken - 1),
+              status: r.status === 'closed' ? 'open' : r.status,
+              participants: r.participants.filter((p) => p.user?.id !== participantUserId),
+            }
+          : r
+      )
+    )
+
+    try {
+      await api.removeRideParticipant(rideId, participantUserId)
+      toast('Katılımcı çıkarıldı.')
+      await load(true)
+    } catch (err) {
+      setRides(prevRides)
+      setError(err.message)
+    } finally {
+      setItemBusy(rideId, 'remove', false)
+    }
+  }
+
   async function handleCancel(id) {
     if (isBusy(id, 'cancel')) return
     setError('')
@@ -150,7 +182,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
 
     try {
       await api.leaveRide(id)
-      toast('Yolculuktan ayrildin.')
+      toast('Yolculuktan ayrıldın.')
       await load(true)
     } catch (err) {
       setRides(prevRides)
@@ -219,7 +251,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
         <EmptyState
           kind="car"
           title={search ? 'Aramana uyan yolculuk yok.' : 'Su an planlanan bir yolculuk yok.'}
-          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk yolculugu sen paylas!'}
+          subtitle={search ? '' : '"İlan Ver" sekmesinden ilk yolculugu sen paylas!'}
         />
       ) : (
         <ul className="card-list">
@@ -243,17 +275,14 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                 <p className="card-meta">
                   Koltuk: {r.seatsTaken}/{r.seatsTotal}
                 </p>
-                {r.participants?.length > 0 && (
-                  <p className="card-meta">
-                    Katilanlar:{' '}
-                    {r.participants.map((p, i) => (
-                      <span key={p.id}>
-                        <ProfileLink userId={p.user?.id} name={p.user?.name} />
-                        {i < r.participants.length - 1 ? ', ' : ''}
-                      </span>
-                    ))}
-                  </p>
-                )}
+                <ParticipantsCard
+                  participants={r.participants}
+                  isOwner={r.ownerId === user.id}
+                  onRemove={(participantUserId) => handleRemoveParticipant(r.id, participantUserId)}
+                  contextType="ride"
+                  contextId={r.id}
+                  contextTitle={`Yolculuk: ${r.destination}`}
+                />
                 <div className="card-actions">
                   {r.ownerId === user.id ? (
                     <button
@@ -261,7 +290,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                       disabled={isBusy(r.id, 'cancel')}
                       onClick={() => handleCancel(r.id)}
                     >
-                      {isBusy(r.id, 'cancel') ? 'Bekleyin...' : 'Iptal Et'}
+                      {isBusy(r.id, 'cancel') ? 'Bekleyin...' : 'İptal Et'}
                     </button>
                   ) : alreadyJoined ? (
                     <button
@@ -269,7 +298,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                       disabled={isBusy(r.id, 'leave')}
                       onClick={() => handleLeave(r.id)}
                     >
-                      {isBusy(r.id, 'leave') ? 'Bekleyin...' : 'Ayril'}
+                      {isBusy(r.id, 'leave') ? 'Bekleyin...' : 'Ayrıl'}
                     </button>
                   ) : (
                     <>

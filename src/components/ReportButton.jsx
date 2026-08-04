@@ -3,8 +3,8 @@ import { api } from '../api'
 
 const REASONS = ['Spam', 'Uygunsuz davranis', 'Sahte ilan', 'Taciz', 'Diger']
 
-// Bir kullaniciyi/ilani sikayet etmek icin kucuk bir form acan buton.
-// contextType/contextId verilirse (orn. bir ilan) sikayet ona baglanir.
+// Bir kullaniciyi/ilani şikayet etmek için kucuk bir form acan buton.
+// contextType/contextId verilirse (orn. bir ilan) şikayet ona baglanir.
 export default function ReportButton({ reportedUserId, contextType, contextId }) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState(REASONS[0])
@@ -27,13 +27,13 @@ export default function ReportButton({ reportedUserId, contextType, contextId })
   }
 
   if (sent) {
-    return <p className="card-note">Sikayetin iletildi, yonetici inceleyecek.</p>
+    return <p className="card-note">Sikayetin iletildi, yönetici inceleyecek.</p>
   }
 
   if (!open) {
     return (
       <button type="button" className="btn-link report-link" onClick={() => setOpen(true)}>
-        Sikayet Et
+        Şikayet Et
       </button>
     )
   }
@@ -57,7 +57,7 @@ export default function ReportButton({ reportedUserId, contextType, contextId })
       {error && <p className="form-error">{error}</p>}
       <div className="card-actions">
         <button className="btn-secondary" disabled={sending} onClick={handleSend}>
-          {sending ? 'Gonderiliyor...' : 'Sikayeti Gonder'}
+          {sending ? 'Gönderiliyor...' : 'Sikayeti Gönder'}
         </button>
         <button className="btn-link" onClick={() => setOpen(false)}>
           Vazgec

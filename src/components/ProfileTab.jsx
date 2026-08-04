@@ -8,7 +8,7 @@ function monthsSince(dateStr) {
   const start = new Date(dateStr)
   const now = new Date()
   const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
-  if (months < 1) return 'Bu ay katildi'
+  if (months < 1) return 'Bu ay katıldı'
   if (months === 1) return '1 aydir yurtta'
   if (months < 12) return `${months} aydir yurtta`
   const years = Math.floor(months / 12)
@@ -37,7 +37,7 @@ export default function ProfileTab() {
     load()
   }, [])
 
-  if (loading) return <p className="muted">Yukleniyor...</p>
+  if (loading) return <p className="muted">Yükleniyor...</p>
   if (error && !profile) return <p className="form-error">{error}</p>
 
   return (
@@ -70,15 +70,15 @@ export default function ProfileTab() {
           Bilgiler
         </button>
         <button
-          className={section === 'guvenlik' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
-          onClick={() => setSection('guvenlik')}
+          className={section === 'güvenlik' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
+          onClick={() => setSection('güvenlik')}
         >
-          Hesap & Guvenlik
+          Hesap & Güvenlik
         </button>
       </div>
 
       {section === 'bilgiler' && <InfoSection profile={profile} onSaved={setProfile} />}
-      {section === 'guvenlik' && <SecuritySection profile={profile} onSaved={setProfile} onLogout={logout} />}
+      {section === 'güvenlik' && <SecuritySection profile={profile} onSaved={setProfile} onLogout={logout} />}
     </div>
   )
 }
@@ -262,7 +262,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
     setPasswordMsg('')
     try {
       await api.profile.changePassword(passwordForm.currentPassword, passwordForm.newPassword)
-      setPasswordMsg('Sifre guncellendi.')
+      setPasswordMsg('Şifre guncellendi.')
       setPasswordForm({ currentPassword: '', newPassword: '' })
     } catch (err) {
       setPasswordErr(err.message)
@@ -318,11 +318,11 @@ function SecuritySection({ profile, onSaved, onLogout }) {
   return (
     <div>
       <form onSubmit={handlePasswordChange} className="new-item-card">
-        <h2>Sifre Degistir</h2>
+        <h2>Şifre Değiştir</h2>
         <div className="inline-form">
           <input
             type="password"
-            placeholder="Mevcut sifre"
+            placeholder="Mevcut şifre"
             value={passwordForm.currentPassword}
             onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
             required
@@ -330,7 +330,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
           />
           <input
             type="password"
-            placeholder="Yeni sifre"
+            placeholder="Yeni şifre"
             value={passwordForm.newPassword}
             onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
             required
@@ -339,13 +339,13 @@ function SecuritySection({ profile, onSaved, onLogout }) {
           {passwordErr && <p className="form-error">{passwordErr}</p>}
           {passwordMsg && <p className="card-note">{passwordMsg}</p>}
           <button className="btn-primary" type="submit" disabled={passwordSaving}>
-            {passwordSaving ? 'Kaydediliyor...' : 'Sifreyi Guncelle'}
+            {passwordSaving ? 'Kaydediliyor...' : 'Sifreyi Güncelle'}
           </button>
         </div>
       </form>
 
       <form onSubmit={handleEmailChange} className="new-item-card">
-        <h2>E-posta Guncelle</h2>
+        <h2>E-posta Güncelle</h2>
         <div className="inline-form">
           <input
             type="email"
@@ -356,7 +356,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
           />
           <input
             type="password"
-            placeholder="Sifren (dogrulama icin)"
+            placeholder="Sifren (doğrulama için)"
             value={emailForm.currentPassword}
             onChange={(e) => setEmailForm({ ...emailForm, currentPassword: e.target.value })}
             required
@@ -365,7 +365,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
           {emailErr && <p className="form-error">{emailErr}</p>}
           {emailMsg && <p className="card-note">{emailMsg}</p>}
           <button className="btn-primary" type="submit" disabled={emailSaving}>
-            {emailSaving ? 'Kaydediliyor...' : 'E-postayi Guncelle'}
+            {emailSaving ? 'Kaydediliyor...' : 'E-postayi Güncelle'}
           </button>
         </div>
       </form>
@@ -374,11 +374,11 @@ function SecuritySection({ profile, onSaved, onLogout }) {
         <h2>Bildirimler</h2>
         <div className="card-actions" style={{ marginTop: 0 }}>
           <button className="btn-secondary" disabled={notifSaving} onClick={handleNotifToggle}>
-            {notifSaving ? 'Kaydediliyor...' : dmNotifications ? 'DM Bildirimleri: Acik' : 'DM Bildirimleri: Kapali'}
+            {notifSaving ? 'Kaydediliyor...' : dmNotifications ? 'DM Bildirimleri: Açık' : 'DM Bildirimleri: Kapalı'}
           </button>
         </div>
         <p className="muted" style={{ marginTop: 12, marginBottom: 6 }}>
-          Uygulama kapaliyken/telefon kilitliyken de bildirim almak icin:
+          Uygulama kapaliyken/telefon kilitliyken de bildirim almak için:
         </p>
         <div className="card-actions" style={{ marginTop: 0 }}>
           <button
@@ -391,7 +391,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
               : pushEnabled === null
                 ? 'Kontrol ediliyor...'
                 : pushEnabled
-                  ? 'Push Bildirimleri: Acik ✓'
+                  ? 'Push Bildirimleri: Açık ✓'
                   : 'Push Bildirimlerini Ac'}
           </button>
         </div>
@@ -401,7 +401,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
       <div className="new-item-card">
         <h2>Hesabi Dondur / Sil</h2>
         <p className="card-note">
-          Hesabini dondurursan tekrar giris yapamazsin. Yeniden aktif etmek icin yurt yoneticisiyle
+          Hesabini dondurursan tekrar giris yapamazsin. Yeniden aktif etmek için yurt yoneticisiyle
           iletisime gecmen gerekir.
         </p>
         {!confirmingDeactivate ? (
@@ -412,7 +412,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
           <form onSubmit={handleDeactivate} className="inline-form">
             <input
               type="password"
-              placeholder="Sifren (onay icin)"
+              placeholder="Sifren (onay için)"
               value={deactivatePassword}
               onChange={(e) => setDeactivatePassword(e.target.value)}
               required

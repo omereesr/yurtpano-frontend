@@ -6,7 +6,7 @@ export default function CapacityBar({ joined, capacity }) {
         <div className="jar-fill" style={{ width: `${pct}%` }} />
       </div>
       <span className="jar-label">
-        {joined} / {capacity} kisi katildi
+        {joined} / {capacity} kisi katıldı
       </span>
     </div>
   )

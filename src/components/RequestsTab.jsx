@@ -13,9 +13,9 @@ import SkeletonList from './SkeletonList'
 import { timeAgo } from '../utils/time'
 
 const TYPE_LABELS = {
-  esya: 'Esya',
+  esya: 'Eşya',
   not: 'Ders Notu',
-  calisma_arkadasi: 'Calisma Arkadasi',
+  calisma_arkadasi: 'Çalışma Arkadaşı',
   etkinlik: 'Etkinlik / Oyun',
   diger: 'Diger',
 }
@@ -70,7 +70,7 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
     try {
       await api.createRequest({ ...form, description: form.description || undefined })
       setForm({ type: 'esya', title: '', description: '' })
-      toast('Ilan paylasildi! 🎉')
+      toast('İlan paylasildi! 🎉')
       onPosted?.()
     } catch (err) {
       setError(err.message)
@@ -84,13 +84,13 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
     setError('')
     setItemBusy(id, 'fulfill', true)
 
-    // Cozulen ilan acik listede gorunmeyecek, direkt listeden cikar.
+    // Cozulen ilan açık listede gorunmeyecek, direkt listeden cikar.
     const prevItems = items
     setItems((prev) => prev.filter((r) => r.id !== id))
 
     try {
       await api.fulfillRequest(id)
-      toast('Cozuldu olarak isaretlendi.')
+      toast('Çözüldü olarak isaretlendi.')
     } catch (err) {
       setItems(prevItems)
       setError(err.message)
@@ -109,7 +109,7 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
 
     try {
       await api.cancelRequest(id)
-      toast('Ilan iptal edildi.')
+      toast('İlan iptal edildi.')
     } catch (err) {
       setItems(prevItems)
       setError(err.message)
@@ -124,14 +124,14 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
         <h2>Anlik ihtiyacini paylas</h2>
         <form onSubmit={handleCreate} className="inline-form">
           <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-            <option value="esya">Esya</option>
+            <option value="esya">Eşya</option>
             <option value="not">Ders Notu</option>
-            <option value="calisma_arkadasi">Calisma Arkadasi</option>
-            <option value="etkinlik">Etkinlik / Oyun Arkadasi</option>
+            <option value="calisma_arkadasi">Çalışma Arkadaşı</option>
+            <option value="etkinlik">Etkinlik / Oyun Arkadaşı</option>
             <option value="diger">Diger</option>
           </select>
           <input
-            placeholder="Orn. 'Type-C sarj aleti olan var mi?' ya da 'Valorant icin +1 araniyor'"
+            placeholder="Orn. 'Type-C sarj aleti olan var mi?' ya da 'Valorant için +1 araniyor'"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             required
@@ -159,7 +159,7 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
       {items.length > 0 && (
         <input
           className="search-box"
-          placeholder="Ilan ara..."
+          placeholder="İlan ara..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -170,8 +170,8 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
       ) : visibleItems.length === 0 ? (
         <EmptyState
           kind="megaphone"
-          title={search ? 'Aramana uyan ilan yok.' : 'Su an acik bir ilan yok.'}
-          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk ilani sen ac!'}
+          title={search ? 'Aramana uyan ilan yok.' : 'Su an açık bir ilan yok.'}
+          subtitle={search ? '' : '"İlan Ver" sekmesinden ilk ilani sen ac!'}
         />
       ) : (
         <ul className="card-list">
@@ -198,14 +198,14 @@ export default function RequestsTab({ mode = 'browse', onPosted }) {
                     disabled={isBusy(r.id, 'fulfill')}
                     onClick={() => handleFulfill(r.id)}
                   >
-                    {isBusy(r.id, 'fulfill') ? 'Bekleyin...' : 'Cozuldu isaretle'}
+                    {isBusy(r.id, 'fulfill') ? 'Bekleyin...' : 'Çözüldü işaretle'}
                   </button>
                   <button
                     className="btn-secondary"
                     disabled={isBusy(r.id, 'cancel')}
                     onClick={() => handleCancel(r.id)}
                   >
-                    {isBusy(r.id, 'cancel') ? 'Bekleyin...' : 'Iptal Et'}
+                    {isBusy(r.id, 'cancel') ? 'Bekleyin...' : 'İptal Et'}
                   </button>
                 </div>
               ) : (

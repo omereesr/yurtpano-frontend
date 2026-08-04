@@ -4,10 +4,10 @@ import { enablePushNotifications, isPushEnabled } from '../push'
 
 const PROMPTED_KEY = 'yurtpano_push_prompted'
 
-// Kullanici uygulamaya ilk kez girdiginde ("bu cihazda daha once hic
+// Kullanıcı uygulamaya ilk kez girdiginde ("bu cihazda daha once hic
 // sorulmadiysa") push bildirimlerini acmak isteyip istemedigini soran
 // kart. Cevap ne olursa olsun (Evet/Hayir) bir daha SORULMAZ - localStorage'a
-// isaretleniyor. Zaten acik oldu ya da tarayici desteklemiyorsa hic gorunmez.
+// isaretleniyor. Zaten açık oldu ya da tarayici desteklemiyorsa hic gorunmez.
 export default function PushPrompt() {
   const toast = useToast()
   const [visible, setVisible] = useState(false)
@@ -21,7 +21,7 @@ export default function PushPrompt() {
 
       const alreadyOn = await isPushEnabled()
       if (alreadyOn) {
-        localStorage.setItem(PROMPTED_KEY, '1') // zaten acik, sormaya gerek yok
+        localStorage.setItem(PROMPTED_KEY, '1') // zaten açık, sormaya gerek yok
         return
       }
       setVisible(true)

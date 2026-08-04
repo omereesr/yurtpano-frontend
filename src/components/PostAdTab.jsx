@@ -5,13 +5,13 @@ import RidesTab from './RidesTab'
 import ListingsTab from './ListingsTab'
 
 const CATEGORIES = [
-  { key: 'orders', label: 'Ortak Siparis', icon: '🧾' },
-  { key: 'requests', label: 'Sosyallesme', icon: '🆘' },
+  { key: 'orders', label: 'Ortak Sipariş', icon: '🧾' },
+  { key: 'requests', label: 'Sosyalleşme', icon: '🆘' },
   { key: 'rides', label: 'Yolculuk', icon: '🚕' },
-  { key: 'listings', label: 'Ikinci El', icon: '📦' },
+  { key: 'listings', label: 'İkinci El', icon: '📦' },
 ]
 
-// Ilan olusturma buradan yapilir, listeleri gezmekten (Ilanlar sekmesi)
+// İlan olusturma buradan yapilir, listeleri gezmekten (İlanlar sekmesi)
 // ayri tutuyoruz - form her seferinde listenin en ustunde durup kaydirma
 // deneyimini bozmasin diye.
 export default function PostAdTab({ onPosted }) {

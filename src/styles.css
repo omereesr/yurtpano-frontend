@@ -262,6 +262,16 @@ select:focus {
   color: var(--accent-urgent);
   background: rgba(193, 72, 59, 0.1);
 }
+.context-tag-link {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  text-transform: none;
+  letter-spacing: normal;
+}
+.context-tag-link:hover {
+  background: rgba(47, 111, 94, 0.18);
+}
 .card-note {
   color: var(--ink-soft);
   font-size: 0.88rem;
@@ -1094,4 +1104,50 @@ input:-webkit-autofill:focus {
   gap: 8px;
   align-items: center;
   flex-shrink: 0;
+}
+
+/* --- Katilimcilar karti --- */
+.participants-card {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.participants-card-title {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.participants-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.participant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.participant-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 100px;
+}
+.participant-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.participant-remove {
+  color: var(--accent-urgent);
+  font-size: 0.78rem;
 }

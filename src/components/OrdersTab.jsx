@@ -9,6 +9,7 @@ import ProfileLink from './ProfileLink'
 import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
+import ParticipantsCard from './ParticipantsCard'
 import EmptyState from './EmptyState'
 import SkeletonList from './SkeletonList'
 import { timeAgo, timeUntil } from '../utils/time'
@@ -31,7 +32,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
     setBusy((b) => ({ ...b, [`${id}:${action}`]: value }))
   }
 
-  // silent=true: arka planda tazele, "Yukleniyor..." donmesin (F5 hissi vermesin)
+  // silent=true: arka planda tazele, "Yükleniyor..." donmesin (F5 hissi vermesin)
   async function load(silent = false) {
     if (!silent) setLoading(true)
     try {
@@ -47,7 +48,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
     if (mode === 'create') return // sadece form gosterilecekse listeyi hic cekme
     load()
 
-    // Baska biri (ya da baska bir sekmede kendimiz) bir siparis actiginda/
+    // Başka biri (ya da başka bir sekmede kendimiz) bir siparis actiginda/
     // degistirdiginde F5 atmadan sessizce guncelle.
     const socket = getSocket()
     if (!socket) return
@@ -138,7 +139,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
 
     try {
       await api.leaveOrder(id)
-      toast('Siparisten ayrildin.')
+      toast('Siparisten ayrıldın.')
       await load(true)
     } catch (err) {
       setOrders(prevOrders)
@@ -148,12 +149,43 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
     }
   }
 
+  async function handleRemoveParticipant(orderId, participantUserId) {
+    if (isBusy(orderId, 'remove')) return
+    setError('')
+    setItemBusy(orderId, 'remove', true)
+
+    const prevOrders = orders
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              joinedCount: Math.max(0, o.joinedCount - 1),
+              status: o.status === 'closed' ? 'open' : o.status,
+              participants: o.participants.filter((p) => p.user?.id !== participantUserId),
+            }
+          : o
+      )
+    )
+
+    try {
+      await api.removeOrderParticipant(orderId, participantUserId)
+      toast('Katılımcı çıkarıldı.')
+      await load(true)
+    } catch (err) {
+      setOrders(prevOrders)
+      setError(err.message)
+    } finally {
+      setItemBusy(orderId, 'remove', false)
+    }
+  }
+
   async function handleCancel(id) {
     if (isBusy(id, 'cancel')) return
     setError('')
     setItemBusy(id, 'cancel', true)
 
-    // Iptal edilen siparis acik listede zaten gorunmeyecek, o yuzden
+    // Iptal edilen siparis açık listede zaten gorunmeyecek, o yuzden
     // dogrudan listeden cikariyoruz.
     const prevOrders = orders
     setOrders((prev) => prev.filter((o) => o.id !== id))
@@ -230,8 +262,8 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
       ) : visibleOrders.length === 0 ? (
         <EmptyState
           kind="cart"
-          title={search ? 'Aramana uyan siparis yok.' : 'Su an acik siparis yok.'}
-          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk siparisi sen ac!'}
+          title={search ? 'Aramana uyan siparis yok.' : 'Su an açık siparis yok.'}
+          subtitle={search ? '' : '"İlan Ver" sekmesinden ilk siparisi sen ac!'}
         />
       ) : (
         <ul className="card-list">
@@ -257,17 +289,14 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                 {o.note && <p className="card-note">{o.note}</p>}
                 <CapacityBar joined={o.joinedCount} capacity={o.capacity} />
 
-                {o.participants?.length > 0 && (
-                  <p className="card-meta">
-                    Katilanlar:{' '}
-                    {o.participants.map((p, i) => (
-                      <span key={p.id}>
-                        <ProfileLink userId={p.user?.id} name={p.user?.name} />
-                        {i < o.participants.length - 1 ? ', ' : ''}
-                      </span>
-                    ))}
-                  </p>
-                )}
+                <ParticipantsCard
+                  participants={o.participants}
+                  isOwner={o.ownerId === user.id}
+                  onRemove={(participantUserId) => handleRemoveParticipant(o.id, participantUserId)}
+                  contextType="order"
+                  contextId={o.id}
+                  contextTitle={`Ortak Sipariş: ${o.restaurant}`}
+                />
 
                 <div className="card-actions">
                   {o.ownerId === user.id ? (
@@ -276,7 +305,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                       disabled={isBusy(o.id, 'cancel')}
                       onClick={() => handleCancel(o.id)}
                     >
-                      {isBusy(o.id, 'cancel') ? 'Bekleyin...' : 'Iptal Et'}
+                      {isBusy(o.id, 'cancel') ? 'Bekleyin...' : 'İptal Et'}
                     </button>
                   ) : alreadyJoined ? (
                     <button
@@ -284,7 +313,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                       disabled={isBusy(o.id, 'leave')}
                       onClick={() => handleLeave(o.id)}
                     >
-                      {isBusy(o.id, 'leave') ? 'Bekleyin...' : 'Ayril'}
+                      {isBusy(o.id, 'leave') ? 'Bekleyin...' : 'Ayrıl'}
                     </button>
                   ) : (
                     <>
@@ -293,7 +322,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                         disabled={isBusy(o.id, 'join')}
                         onClick={() => handleJoin(o.id)}
                       >
-                        {isBusy(o.id, 'join') ? 'Katiliyor...' : 'Katil'}
+                        {isBusy(o.id, 'join') ? 'Katılıyor...' : 'Katıl'}
                       </button>
                       <MessageButton
                         toUserId={o.ownerId}

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 // Chrome/Android, sayfa "yuklenebilir" (installable) kriterlerini
 // karsilayinca 'beforeinstallprompt' olayini tetikler. Bu olayi yakalayip
 // tarayicinin otomatik (ve genelde kotu zamanlanmis) banner'ini engelliyoruz,
-// bunun yerine kendi zamanimizda kucuk bir "Uygulamayi Yukle" karti gosteriyoruz.
+// bunun yerine kendi zamanimizda kucuk bir "Uygulamayi Yükle" karti gosteriyoruz.
 //
 // NOT: iOS Safari bu API'yi desteklemiyor - iOS kullanicilari "Paylas" >
 // "Ana Ekrana Ekle" yolunu elle kullanmali (App Store disi PWA kurulumu
@@ -48,7 +48,7 @@ export default function InstallPrompt() {
       <span>📲 YurtPano'yu telefonuna ana ekran uygulaması olarak ekle</span>
       <div className="install-prompt-actions">
         <button className="btn-primary" onClick={handleInstall}>
-          Yukle
+          Yükle
         </button>
         <button className="btn-link" onClick={handleDismiss}>
           Simdi degil

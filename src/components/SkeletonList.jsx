@@ -1,4 +1,4 @@
-// "Yukleniyor..." yazisi yerine, gercek kartlarin hayaletini andiran
+// "Yükleniyor..." yazisi yerine, gercek kartlarin hayaletini andiran
 // parlayan (shimmer) kutucuklar gosteriyoruz - bu, uygulamayi anlik/hizli
 // hissettiren en ucuz gorsel numaralardan biri.
 export default function SkeletonList({ count = 3 }) {

@@ -53,7 +53,7 @@ export default function MessagesTab({ onNavigate }) {
   }, [])
 
   // "Sohbetler": kabul edilmis konusmalar + kendi gonderdigim ("baslattigim")
-  // bekleyen istekler (kendi gonderdigin istek senin icin bir sohbet gibi
+  // bekleyen istekler (kendi gonderdigin istek senin için bir sohbet gibi
   // gorunur, karsi tarafta ise "istek" olarak kalir).
   const sohbetler = all.filter((c) => c.status === 'accepted' || (c.status === 'pending' && c.isInitiator))
   // "Istekler": sadece BASKASININ sana gonderdigi, henuz cevap vermedigin istekler.
@@ -97,7 +97,7 @@ export default function MessagesTab({ onNavigate }) {
 
       {error && <p className="form-error">{error}</p>}
       {loading ? (
-        <p className="muted">Yukleniyor...</p>
+        <p className="muted">Yükleniyor...</p>
       ) : list.length === 0 ? (
         <EmptyState
           kind="chat"
@@ -114,9 +114,16 @@ export default function MessagesTab({ onNavigate }) {
               style={{ cursor: 'pointer' }}
             >
               {c.contextTitle && (
-                <div className="card-tag">
-                  {CONTEXT_LABELS[c.contextType] || 'Ilan'}: {c.contextTitle}
-                </div>
+                <button
+                  type="button"
+                  className="card-tag context-tag-link"
+                  onClick={(e) => {
+                    e.stopPropagation() // konusmayi acmasin, direkt ilana gitsin
+                    onNavigate?.(CONTEXT_TABS[c.contextType] || 'feed')
+                  }}
+                >
+                  {CONTEXT_LABELS[c.contextType] || 'İlan'}: {c.contextTitle} ↗
+                </button>
               )}
               <div className="feed-card-header" style={{ marginTop: 6 }}>
                 {c.unread && <span className="unread-dot" title="Okunmadi" />}
@@ -198,7 +205,7 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
       setData(result)
       setOtherLastReadAt(result.conversation.otherLastReadAt)
       // Bu istek backend'de "okundu" zamanini da guncelliyor - ust bardaki
-      // zil/avatar rozetindeki sayinin ANINDA dusmesi icin global bir event
+      // zil/avatar rozetindeki sayinin ANINDA dusmesi için global bir event
       // yayinliyoruz (F5 atmadan).
       window.dispatchEvent(new Event('yurtpano:messages-read'))
     } catch (err) {
@@ -286,13 +293,13 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
   }
 
   if (error && !data) return <p className="form-error">{error}</p>
-  if (!data) return <p className="muted">Yukleniyor...</p>
+  if (!data) return <p className="muted">Yükleniyor...</p>
 
   const otherUser = data.conversation.otherUser
   const isSystemThread = !!otherUser?.isSystem
   const isPendingForMe = data.conversation.status === 'pending' && data.conversation.initiatorId !== user.id
   // Benim gonderdigim son mesaj, karsi tarafin "okundu" zamanindan ONCE
-  // gonderilmisse "Gorundu" gosterebiliriz.
+  // gonderilmisse "Görüldü" gosterebiliriz.
   const myMessages = data.messages.filter((m) => m.senderId === user.id)
   const lastMineId = myMessages.length > 0 ? myMessages[myMessages.length - 1].id : null
 
@@ -309,9 +316,13 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
       </div>
 
       {data.conversation.contextTitle && (
-        <div className="card-tag">
-          {CONTEXT_LABELS[data.conversation.contextType] || 'Ilan'}: {data.conversation.contextTitle}
-        </div>
+        <button
+          type="button"
+          className="card-tag context-tag-link"
+          onClick={() => onNavigate?.(CONTEXT_TABS[data.conversation.contextType] || 'feed')}
+        >
+          {CONTEXT_LABELS[data.conversation.contextType] || 'İlan'}: {data.conversation.contextTitle} ↗
+        </button>
       )}
 
       <div className="message-thread" ref={threadRef}>
@@ -319,9 +330,9 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
           <div key={m.id} className={m.senderId === user.id ? 'message-bubble mine' : 'message-bubble'}>
             <p>{m.body}</p>
 
-            {/* Sistem mesaji "X kisi ilanina katildi" ise, direkt o kisiye
+            {/* Sistem mesaji "X kisi ilanina katıldı" ise, direkt o kisiye
                 gidip mesaj atabilecegin ve ilana gidebilecegin kucuk
-                baglantilar goster. */}
+                baglantilar göster. */}
             {m.refUserId && (
               <div className="message-ref-chip">
                 👤 <ProfileLink userId={m.refUserId} name={m.refUserName} />
@@ -345,13 +356,13 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
               )}
             </div>
             {m.id === lastMineId && otherLastReadAt && new Date(m.createdAt) <= new Date(otherLastReadAt) && (
-              <span className="read-receipt">Gorundu ✓✓</span>
+              <span className="read-receipt">Görüldü ✓✓</span>
             )}
           </div>
         ))}
       </div>
 
-      {otherTyping && <p className="typing-indicator">{otherUser?.name} yaziyor...</p>}
+      {otherTyping && <p className="typing-indicator">{otherUser?.name} yazıyor...</p>}
 
       {isPendingForMe ? (
         <RequestActions
@@ -373,7 +384,7 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
           />
           {error && <p className="form-error">{error}</p>}
           <button className="btn-primary" type="submit" disabled={sending || !body.trim()}>
-            {sending ? 'Gonderiliyor...' : 'Gonder'}
+            {sending ? 'Gönderiliyor...' : 'Gönder'}
           </button>
         </form>
       )}

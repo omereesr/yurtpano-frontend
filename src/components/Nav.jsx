@@ -3,14 +3,14 @@ import UserMenu from './UserMenu'
 import useUnreadCount from '../hooks/useUnreadCount'
 
 const TABS = [
-  { key: 'feed', label: 'Akis', icon: '🏠' },
-  { key: 'ilanlar', label: 'Ilanlar', icon: '📋' },
-  { key: 'post', label: 'Ilan Ver', icon: '➕' },
+  { key: 'feed', label: 'Akış', icon: '🏠' },
+  { key: 'ilanlar', label: 'İlanlar', icon: '📋' },
+  { key: 'post', label: 'İlan Ver', icon: '➕' },
   { key: 'messages', label: 'Mesajlar', icon: '💬' },
 ]
 
 export default function Nav({ active, onChange, onLogout, userName, isAdmin }) {
-  const tabs = isAdmin ? [...TABS, { key: 'admin', label: 'Yonetim', icon: '🛠️' }] : TABS
+  const tabs = isAdmin ? [...TABS, { key: 'admin', label: 'Yönetim', icon: '🛠️' }] : TABS
   const unread = useUnreadCount()
 
   return (

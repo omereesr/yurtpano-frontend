@@ -11,7 +11,7 @@ function monthsSince(dateStr) {
   const start = new Date(dateStr)
   const now = new Date()
   const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
-  if (months < 1) return 'Bu ay katildi'
+  if (months < 1) return 'Bu ay katıldı'
   if (months === 1) return '1 aydir yurtta'
   if (months < 12) return `${months} aydir yurtta`
   const years = Math.floor(months / 12)
@@ -19,7 +19,7 @@ function monthsSince(dateStr) {
 }
 
 // Bir kart uzerindeki isme tiklayinca o kisinin profilini gosteren kucuk
-// bir pencere acar. Ayni yurttan olmayan / bulunamayan kullanicilar icin
+// bir pencere acar. Ayni yurttan olmayan / bulunamayan kullanıcılar için
 // sessizce hata gosterir.
 export default function ProfileLink({ userId, name, children }) {
   const [open, setOpen] = useState(false)
@@ -107,7 +107,7 @@ function ProfileModal({ userId, onClose }) {
         </button>
 
         {error && <p className="form-error">{error}</p>}
-        {!profile && !error && <p className="muted">Yukleniyor...</p>}
+        {!profile && !error && <p className="muted">Yükleniyor...</p>}
 
         {profile && (
           <>
@@ -162,7 +162,7 @@ function ProfileModal({ userId, onClose }) {
 
             {isOwnProfile ? (
               // Kendi profilin: puan VEREMEZSIN, sadece aldigin puanin
-              // ozetini goruyorsun. Mesaj/sikayet de anlamsiz, gizliyoruz.
+              // ozetini goruyorsun. Mesaj/şikayet de anlamsiz, gizliyoruz.
               <p className="rating-summary" style={{ marginTop: 10 }}>
                 ⭐{' '}
                 {profile.ratingCount > 0

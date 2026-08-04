@@ -15,9 +15,9 @@ const KIND_META = {
   listing: { label: 'Ikinci El', icon: '📦', tab: 'listings' },
 }
 
-// Bu sekme, diger 4 sekmedeki (siparis/sosyallesme/yolculuk/ikinci el) acik
+// Bu sekme, diger 4 sekmedeki (siparis/sosyallesme/yolculuk/ikinci el) açık
 // kayitlari tek bir "akis" halinde, en yeniden eskiye siralayarak gosterir.
-// Boylece kullanici uygulamaya girince hangi sekmeye bakacagini
+// Boylece kullanıcı uygulamaya girince hangi sekmeye bakacagini
 // dusunmeden genel bir goruntu edinir.
 export default function FeedTab({ onNavigate }) {
   const [items, setItems] = useState([])
@@ -68,8 +68,8 @@ export default function FeedTab({ onNavigate }) {
     return (
       <EmptyState
         kind="megaphone"
-        title="Yurdunda henuz acik bir ilan yok."
-        subtitle="Ilk ilani sen ac, akis burada dolmaya baslasin!"
+        title="Yurdunda henuz açık bir ilan yok."
+        subtitle="İlk ilani sen ac, akis burada dolmaya baslasin!"
       />
     )
   }
@@ -94,7 +94,7 @@ function FeedCard({ item, onNavigate }) {
   let subtitle = ''
   if (item.kind === 'order') {
     title = d.restaurant
-    subtitle = `${d.joinedCount}/${d.capacity} kisi katildi`
+    subtitle = `${d.joinedCount}/${d.capacity} kisi katıldı`
   } else if (item.kind === 'request') {
     title = d.title
     subtitle = d.description || ''

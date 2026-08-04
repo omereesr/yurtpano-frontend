@@ -4,14 +4,14 @@ import RidesTab from './RidesTab'
 import ListingsTab from './ListingsTab'
 
 const CATEGORIES = [
-  { key: 'orders', label: 'Ortak Siparis', icon: '🧾' },
-  { key: 'requests', label: 'Sosyallesme', icon: '🆘' },
+  { key: 'orders', label: 'Ortak Sipariş', icon: '🧾' },
+  { key: 'requests', label: 'Sosyalleşme', icon: '🆘' },
   { key: 'rides', label: 'Yolculuk', icon: '🚕' },
-  { key: 'listings', label: 'Ikinci El', icon: '📦' },
+  { key: 'listings', label: 'İkinci El', icon: '📦' },
 ]
 
-// Tum ilan turlerini tek bir "Ilanlar" sekmesi altinda toplar. Ilan
-// OLUSTURMA burada degil, ayri "Ilan Ver" sayfasinda - boylece gezinme
+// Tum ilan turlerini tek bir "İlanlar" sekmesi altinda toplar. İlan
+// OLUSTURMA burada degil, ayri "İlan Ver" sayfasinda - boylece gezinme
 // (browse) ve yazma (create) birbirine karismaz.
 export default function ListingsHub({ category, onCategoryChange }) {
   return (

@@ -66,7 +66,7 @@ export default function ListingsTab({ mode = 'browse', onPosted }) {
         price: Number(form.price),
       })
       setForm({ title: '', description: '', price: '' })
-      toast('Ilan verildi! 🎉')
+      toast('İlan verildi! 🎉')
       onPosted?.()
     } catch (err) {
       setError(err.message)
@@ -105,7 +105,7 @@ export default function ListingsTab({ mode = 'browse', onPosted }) {
 
     try {
       await api.cancelListing(id)
-      toast('Ilan kaldirildi.')
+      toast('İlan kaldirildi.')
     } catch (err) {
       setListings(prevListings)
       setError(err.message)
@@ -140,7 +140,7 @@ export default function ListingsTab({ mode = 'browse', onPosted }) {
           />
           {error && <p className="form-error">{error}</p>}
           <button className="btn-primary" type="submit" disabled={creating}>
-            {creating ? 'Ilan Veriliyor...' : 'Ilan Ver'}
+            {creating ? 'İlan Veriliyor...' : 'İlan Ver'}
           </button>
         </form>
       </section>
@@ -168,7 +168,7 @@ export default function ListingsTab({ mode = 'browse', onPosted }) {
         <EmptyState
           kind="box"
           title={search ? 'Aramana uyan esya yok.' : 'Su an satista esya yok.'}
-          subtitle={search ? '' : '"Ilan Ver" sekmesinden ilk esyani sen sat!'}
+          subtitle={search ? '' : '"İlan Ver" sekmesinden ilk esyani sen sat!'}
         />
       ) : (
         <ul className="card-list">
@@ -194,14 +194,14 @@ export default function ListingsTab({ mode = 'browse', onPosted }) {
                     disabled={isBusy(l.id, 'sold')}
                     onClick={() => handleSold(l.id)}
                   >
-                    {isBusy(l.id, 'sold') ? 'Bekleyin...' : 'Satildi isaretle'}
+                    {isBusy(l.id, 'sold') ? 'Bekleyin...' : 'Satildi işaretle'}
                   </button>
                   <button
                     className="btn-secondary"
                     disabled={isBusy(l.id, 'cancel')}
                     onClick={() => handleCancel(l.id)}
                   >
-                    {isBusy(l.id, 'cancel') ? 'Bekleyin...' : 'Iptal Et'}
+                    {isBusy(l.id, 'cancel') ? 'Bekleyin...' : 'İptal Et'}
                   </button>
                 </div>
               ) : (

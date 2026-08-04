@@ -21,8 +21,8 @@ export default function AuthScreen() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // OTP akisi icin ayri durum: e-posta dogrulanana kadar formun geri kalani
-  // gizli kalir, kullanici once "Kod Gonder"e basar.
+  // OTP akisi için ayri durum: e-posta dogrulanana kadar formun geri kalani
+  // gizli kalir, kullanıcı once "Kod Gönder"e basar.
   const [otpSent, setOtpSent] = useState(false)
   const [otpSending, setOtpSending] = useState(false)
   const [otpInfo, setOtpInfo] = useState('')
@@ -38,9 +38,9 @@ export default function AuthScreen() {
     setForm((f) => ({ ...f, [field]: value }))
   }
 
-  // Basit bir e-posta format kontrolu - "Kod Gonder" butonunu ne zaman
-  // aktif edecegimizi bilmek icin (asil dogrulama backend'de yapiliyor).
-  // .edu.tr sarti da burada erken uyarmak icin var - asil zorunlu kontrol
+  // Basit bir e-posta format kontrolu - "Kod Gönder" butonunu ne zaman
+  // aktif edecegimizi bilmek için (asil doğrulama backend'de yapiliyor).
+  // .edu.tr sarti da burada erken uyarmak için var - asil zorunlu kontrol
   // backend'de.
   const emailLooksValid = /\S+@\S+\.\S+/.test(form.email)
   const emailIsEduTr = form.email.toLowerCase().endsWith('.edu.tr')
@@ -54,8 +54,8 @@ export default function AuthScreen() {
       setOtpSent(true)
       setOtpInfo(
         res.devCode
-          ? `Gelistirme modu: dogrulama kodu "${res.devCode}" (gercek e-posta gonderilmedi)`
-          : 'Kod e-postana gonderildi (gelen kutunu/spam klasorunu kontrol et).'
+          ? `Gelistirme modu: doğrulama kodu "${res.devCode}" (gercek e-posta gonderilmedi)`
+          : 'Kod e-postana gönderildi (gelen kutunu/spam klasorunu kontrol et).'
       )
     } catch (err) {
       setError(err.message)
@@ -132,7 +132,7 @@ export default function AuthScreen() {
                   disabled={!emailLooksValid || !emailIsEduTr || otpSending}
                   onClick={handleSendOtp}
                 >
-                  {otpSending ? 'Gonderiliyor...' : 'Dogrulama Kodu Gonder'}
+                  {otpSending ? 'Gönderiliyor...' : 'Doğrulama Kodu Gönder'}
                 </button>
               ) : (
                 <>
@@ -179,7 +179,7 @@ export default function AuthScreen() {
                         required
                       >
                         <option value="" disabled>
-                          Yurdunu sec...
+                          Yurdunu seç...
                         </option>
                         {dorms.map((d) => (
                           <option key={d.id} value={d.id}>
@@ -194,7 +194,7 @@ export default function AuthScreen() {
                     <input value={form.roomNo} onChange={(e) => update('roomNo', e.target.value)} />
                   </label>
                   <label>
-                    Sifre
+                    Şifre
                     <input
                       type="password"
                       value={form.password}
@@ -219,7 +219,7 @@ export default function AuthScreen() {
                 />
               </label>
               <label>
-                Sifre
+                Şifre
                 <input
                   type="password"
                   value={loginPassword}
