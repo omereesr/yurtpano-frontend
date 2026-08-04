@@ -207,6 +207,17 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
       el.style.position = 'fixed'
       el.style.left = '0px'
       el.style.right = '0px'
+      // KRITIK BUG DUZELTMESI: .messages-shell CSS sinifinda hala
+      // "width: 100%; max-width: 100vw;" tanimliydi ve bunlari hic
+      // GECERSIZ KILMAMISTIM. CSS kurali geregi, position:fixed bir
+      // elementte left + right + width AYNI ANDA tanimliysa, tarayici
+      // "right"i YOK SAYAR ve genisligi left+width'ten hesaplar - yani
+      // right:0 ayarim hicbir zaman gercekten uygulanmiyordu, genislik
+      // hala eski (ve ekranla tam eslesmeyen) width:100% degerinden
+      // geliyordu. Simdi ikisini de inline olarak SIFIRLIYORUZ ki
+      // left:0 + right:0 genisligi KENDI hesaplasin.
+      el.style.width = 'auto'
+      el.style.maxWidth = 'none'
       // KRITIK: taban CSS sinifindaki "margin:-16px" (liste gorunumunun
       // app-main dolgusunu iptal etmek icin kullandigi numara) bu SABIT
       // konumlandirilmis pencereyle CATISIYORDU - negatif margin, left:0/
@@ -216,10 +227,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
       // top/left/right/height yapsin.
       el.style.margin = '0px'
       el.style.zIndex = '200'
-      // NOT: 'width' KASITLI OLARAK ayarlanmiyor - left:0 + right:0 birlikte
-      // genisligi otomatik ve KESIN dogru hesaplar. Ayrica 'width' vermek
-      // (visualViewport.width ölçümü tam piksel-hassas olmayabildigi icin)
-      // sagda ince bir bosluk birakabiliyordu.
       if (vv) {
         el.style.top = `${vv.offsetTop}px`
         el.style.height = `${vv.height}px`
