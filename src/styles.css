@@ -45,6 +45,14 @@ html {
      gri cubuklarini ve sayfayi yukari/asagi asiri kaydirinca olusan
      "rubber-band" bosluk/cubuklarini tamamen kapatiyoruz. */
   overscroll-behavior: none;
+  /* Uygulama genelinde gorunur kaydirma cubugu istemiyoruz (native app
+     hissi icin) - kaydirma islevi calismaya devam ediyor, sadece cubuk
+     gorunmuyor. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar {
+  display: none;
 }
 body {
   margin: 0;
@@ -61,7 +69,11 @@ body {
 .app-shell {
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* min-height degil height - flex cocuklarina KESIN bir yukseklik referansi verir */
+  /* --app-vh, VisualViewport API'sinden JS ile geliyor (klavye acikken
+     bile DOGRU gorunen yukseklik) - bu, dvh biriminin bazi tarayicilarda
+     klavyeyi tam yansitmama sorununu cozuyor. JS henuz calismadiysa
+     100dvh'ye geri duser. */
+  height: var(--app-vh, 100dvh);
 }
 
 .top-bar {
