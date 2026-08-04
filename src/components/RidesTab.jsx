@@ -281,7 +281,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                   onRemove={(participantUserId) => handleRemoveParticipant(r.id, participantUserId)}
                   contextType="ride"
                   contextId={r.id}
-                  contextTitle={`Yolculuk: ${r.destination}`}
+                  contextTitle={r.destination}
                 />
                 <div className="card-actions">
                   {r.ownerId === user.id ? (
@@ -313,7 +313,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                         toUserId={r.ownerId}
                         contextType="ride"
                         contextId={r.id}
-                        contextTitle={`Yolculuk: ${r.destination}`}
+                        contextTitle={r.destination}
                       />
                     </>
                   )}

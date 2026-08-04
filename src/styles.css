@@ -1314,19 +1314,9 @@ input:-webkit-autofill:focus {
   flex-shrink: 0;
 }
 
-/* --- Mesaj balonu grubu + cek-cevapla jesti --- */
+/* --- Mesaj balonu grubu --- */
 .message-group-wrap {
   position: relative;
-  transition: transform 0.15s ease;
-}
-.swipe-reply-icon {
-  position: absolute;
-  left: -28px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.1rem;
-  color: var(--accent-teal);
-  opacity: 0.7;
 }
 .message-bubble-row {
   display: flex;

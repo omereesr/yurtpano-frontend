@@ -295,7 +295,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                   onRemove={(participantUserId) => handleRemoveParticipant(o.id, participantUserId)}
                   contextType="order"
                   contextId={o.id}
-                  contextTitle={`Ortak Sipariş: ${o.restaurant}`}
+                  contextTitle={o.restaurant}
                 />
 
                 <div className="card-actions">
@@ -328,7 +328,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                         toUserId={o.ownerId}
                         contextType="order"
                         contextId={o.id}
-                        contextTitle={`Ortak Siparis: ${o.restaurant}`}
+                        contextTitle={o.restaurant}
                       />
                     </>
                   )}

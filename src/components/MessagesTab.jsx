@@ -190,6 +190,28 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const [otherLastReadAt, setOtherLastReadAt] = useState(null)
   const [replyTo, setReplyTo] = useState(null) // { id, body, senderName }
   const threadRef = useRef(null)
+  const shellRef = useRef(null)
+
+  // ONEMLI: dvh/yukseklik hesaplarina guvenmek yerine, klavye acikken
+  // GERCEKTE ne kadar alan kapladigini DOGRUDAN olcup, kabugun altina
+  // tam o kadar bosluk (padding) ekliyoruz. Bu, tarayicidan tarayiciya
+  // degisen "visualViewport kuculur mu / kayar mi" farklarindan
+  // BAGIMSIZ calisan, en guvenilir yontem.
+  useEffect(() => {
+    function updateKeyboardInset() {
+      if (!shellRef.current || !window.visualViewport) return
+      const vv = window.visualViewport
+      const inset = window.innerHeight - vv.height - vv.offsetTop
+      shellRef.current.style.paddingBottom = `${Math.max(0, Math.round(inset))}px`
+    }
+    updateKeyboardInset()
+    window.visualViewport?.addEventListener('resize', updateKeyboardInset)
+    window.visualViewport?.addEventListener('scroll', updateKeyboardInset)
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateKeyboardInset)
+      window.visualViewport?.removeEventListener('scroll', updateKeyboardInset)
+    }
+  }, [])
 
   useEffect(() => {
     // requestAnimationFrame: tarayici yeni mesaji/yuksekligi tam
@@ -375,7 +397,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const lastMineId = myMessages.length > 0 ? myMessages[myMessages.length - 1].id : null
 
   return (
-    <div className="messages-shell">
+    <div className="messages-shell" ref={shellRef}>
       <div className="messages-header thread-header">
         <button className="btn-link thread-back" onClick={onBack}>
           ←
@@ -475,39 +497,7 @@ function MessageBubble({
   onQuoteClick,
   showReadReceipt,
 }) {
-  const [dragX, setDragX] = useState(0)
   const [showPicker, setShowPicker] = useState(false)
-  const touchStartX = useRef(null)
-  const touchStartY = useRef(null)
-  const swipeDirection = useRef(null) // null = henuz belli degil, true = yatay, false = dikey
-
-  function handleTouchStart(e) {
-    touchStartX.current = e.touches[0].clientX
-    touchStartY.current = e.touches[0].clientY
-    swipeDirection.current = null
-  }
-  function handleTouchMove(e) {
-    if (touchStartX.current === null) return
-    const deltaX = e.touches[0].clientX - touchStartX.current
-    const deltaY = e.touches[0].clientY - touchStartY.current
-
-    // Yon henuz belirlenmediyse: ilk belirgin harekette KILITLE. Boylece
-    // dikey kaydirirken parmagin dogal ufak yatay sapmalari balonu
-    // titretmiyor - sadece GERCEKTEN yatay bir hareketse tepki veriyoruz.
-    if (swipeDirection.current === null && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
-      swipeDirection.current = Math.abs(deltaX) > Math.abs(deltaY)
-    }
-    if (swipeDirection.current === true) {
-      setDragX(Math.max(0, Math.min(70, deltaX)))
-    }
-  }
-  function handleTouchEnd() {
-    if (swipeDirection.current === true && dragX > 45) onReply()
-    setDragX(0)
-    touchStartX.current = null
-    touchStartY.current = null
-    swipeDirection.current = null
-  }
 
   // Tepkileri emoji'ye gore grupluyoruz: {emoji: [kullanicilar]}
   const grouped = {}
@@ -517,15 +507,7 @@ function MessageBubble({
   })
 
   return (
-    <div
-      className="message-group-wrap"
-      data-message-id={m.id}
-      style={{ transform: dragX ? `translateX(${dragX}px)` : undefined }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {dragX > 10 && <span className="swipe-reply-icon">↩</span>}
+    <div className="message-group-wrap" data-message-id={m.id}>
       <div className={isMine ? 'message-group mine' : 'message-group'}>
         {showContextTag && (
           <button
