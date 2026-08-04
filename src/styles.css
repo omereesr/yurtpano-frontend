@@ -294,6 +294,8 @@ select:focus {
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
+  min-width: 0; /* flex sutununda cocuklarin genislik tasmasini engeller */
+  max-width: 100%;
 }
 .message-group.mine {
   align-items: flex-end;
@@ -473,6 +475,9 @@ select:focus {
   border-radius: 12px;
   padding: 8px 12px;
   max-width: 80%;
+  min-width: 0; /* flex icinde icerigin tasmasini engellemek icin sart */
+  overflow-wrap: break-word; /* uzun/bosluksuz kelimeler balonu yatay genisletmesin */
+  word-break: break-word;
 }
 .message-bubble p {
   margin: 0;
@@ -1211,10 +1216,13 @@ input:-webkit-autofill:focus {
 .messages-shell {
   display: flex;
   flex-direction: column;
-  height: 100%; /* app-main'in flex:1 ile ayirdigi ALANIN TAMAMI - artik piksel tahmini yok */
+  height: 100%; /* app-main'in flex:1 ile ayirdigi ALANIN TAMAMI - liste gorunumu icin */
+  width: 100%;
+  max-width: 100vw; /* konusma ekrani "fixed" oldugunda tasmayi kesin engelle */
   margin: -16px;
   background: var(--paper);
   overflow: hidden;
+  overflow-x: hidden; /* saga-sola kaymanin/tasmanin ana kilidi - kapsayicida */
 }
 .messages-header {
   flex-shrink: 0;
@@ -1317,9 +1325,13 @@ input:-webkit-autofill:focus {
 /* --- Mesaj balonu grubu --- */
 .message-group-wrap {
   position: relative;
+  min-width: 0;
+  max-width: 100%;
 }
 .message-bubble-row {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   gap: 4px;
 }
