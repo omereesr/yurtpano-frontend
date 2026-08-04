@@ -529,7 +529,10 @@ select:focus {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  z-index: 100;
+  /* NOT: mesajlasma ekrani (.messages-shell) artik z-index:200 ile TAM
+     EKRAN kapliyor - bir mesajdaki isme tiklayip profil actiginda bu
+     pencere onun ARKASINDA kalmasin diye z-index'i ondan yuksek olmali. */
+  z-index: 250;
 }
 .modal-card {
   background: var(--card-bg);
