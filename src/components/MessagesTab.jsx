@@ -207,11 +207,22 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
       el.style.position = 'fixed'
       el.style.left = '0px'
       el.style.right = '0px'
+      // KRITIK: taban CSS sinifindaki "margin:-16px" (liste gorunumunun
+      // app-main dolgusunu iptal etmek icin kullandigi numara) bu SABIT
+      // konumlandirilmis pencereyle CATISIYORDU - negatif margin, left:0/
+      // right:0'i "ittirip" sagda bosluk birakiyor ve pencerenin ekranin
+      // tam altina kadar uzanmasini (dolayisiyla alt menuyu tam kapatmasini)
+      // engelliyordu. Margin'i SIFIRLIYORUZ - konumlandirmayi tamamen
+      // top/left/right/height yapsin.
+      el.style.margin = '0px'
       el.style.zIndex = '200'
+      // NOT: 'width' KASITLI OLARAK ayarlanmiyor - left:0 + right:0 birlikte
+      // genisligi otomatik ve KESIN dogru hesaplar. Ayrica 'width' vermek
+      // (visualViewport.width ölçümü tam piksel-hassas olmayabildigi icin)
+      // sagda ince bir bosluk birakabiliyordu.
       if (vv) {
         el.style.top = `${vv.offsetTop}px`
         el.style.height = `${vv.height}px`
-        el.style.width = `${vv.width}px`
       } else {
         // visualViewport desteklemeyen (cok eski) tarayicilarda yedek.
         el.style.top = '0px'
