@@ -233,6 +233,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const [replyTo, setReplyTo] = useState(null) // { id, body, senderName }
   const threadRef = useRef(null)
   const shellRef = useRef(null)
+  const textareaRef = useRef(null)
   useFixedViewport(shellRef) // tam ekran + klavye takibi (sadece konusma ekrani icin - liste normal akista kalip alt menuyu gizlemiyor)
 
   useEffect(() => {
@@ -347,6 +348,11 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
       setReplyTo(null)
       setData((prev) => (prev ? { ...prev, messages: [...prev.messages, message] } : prev))
       onChanged()
+      // Mobil tarayicilarda "Gonder" butonuna dokunmak, textarea'nin
+      // odagini (focus) kaybettirip klavyeyi kapatabiliyor - WhatsApp'ta
+      // oldugu gibi klavye acik kalsin diye gonderdikten hemen sonra
+      // textarea'ya odagi GERI VERIYORUZ.
+      textareaRef.current?.focus()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -439,6 +445,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
             key={m.id}
             message={m}
             isMine={m.senderId === user.id}
+            isSystemThread={isSystemThread}
             showContextTag={i === 0 && data.conversation.contextTitle}
             contextLabel={CONTEXT_LABELS[data.conversation.contextType] || 'İlan'}
             contextTitle={data.conversation.contextTitle}
@@ -457,7 +464,11 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
 
       {otherTyping && <p className="typing-indicator">{otherUser?.name} yazıyor...</p>}
 
-      {isPendingForMe ? (
+      {isSystemThread ? (
+        <p className="card-note" style={{ padding: '0 14px 14px' }}>
+          🔔 Bu, otomatik bildirimlerin geldiği bir bildirim merkezi - buraya mesaj yazamazsın.
+        </p>
+      ) : isPendingForMe ? (
         <RequestActions
           conversationId={conversationId}
           onDone={() => {
@@ -484,6 +495,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
           )}
           <div className="messages-composer-row">
             <textarea
+              ref={textareaRef}
               placeholder="Mesajını yaz..."
               value={body}
               onChange={(e) => handleTypingInput(e.target.value)}
@@ -508,6 +520,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
 function MessageBubble({
   message: m,
   isMine,
+  isSystemThread,
   showContextTag,
   contextLabel,
   contextTitle,
@@ -542,7 +555,7 @@ function MessageBubble({
         )}
 
         <div className="message-bubble-row">
-          {!isMine && (
+          {!isMine && !isSystemThread && (
             <button type="button" className="message-hover-btn reply-btn" onClick={onReply} title="Yanıtla">
               ↩
             </button>
@@ -580,19 +593,21 @@ function MessageBubble({
             </div>
             {showReadReceipt && <span className="read-receipt">Görüldü ✓✓</span>}
           </div>
-          {isMine && (
+          {isMine && !isSystemThread && (
             <button type="button" className="message-hover-btn reply-btn" onClick={onReply} title="Yanıtla">
               ↩
             </button>
           )}
-          <button
-            type="button"
-            className="message-hover-btn react-btn"
-            onClick={() => setShowPicker((s) => !s)}
-            title="Tepki ver"
-          >
-            🙂
-          </button>
+          {!isSystemThread && (
+            <button
+              type="button"
+              className="message-hover-btn react-btn"
+              onClick={() => setShowPicker((s) => !s)}
+              title="Tepki ver"
+            >
+              🙂
+            </button>
+          )}
         </div>
 
         {showPicker && (

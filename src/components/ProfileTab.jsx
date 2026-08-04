@@ -301,6 +301,22 @@ function SecuritySection({ profile, onSaved, onLogout }) {
     }
   }
 
+  const [requireJoinApproval, setRequireJoinApproval] = useState(profile.requireJoinApproval)
+  const [joinApprovalSaving, setJoinApprovalSaving] = useState(false)
+
+  async function handleJoinApprovalToggle() {
+    const next = !requireJoinApproval
+    setJoinApprovalSaving(true)
+    try {
+      await api.profile.setJoinApproval(next)
+      setRequireJoinApproval(next)
+    } catch (err) {
+      // sessizce eski haline don
+    } finally {
+      setJoinApprovalSaving(false)
+    }
+  }
+
   async function handleDeactivate(e) {
     e.preventDefault()
     setDeactivating(true)
@@ -396,6 +412,31 @@ function SecuritySection({ profile, onSaved, onLogout }) {
           </button>
         </div>
         {pushError && <p className="form-error">{pushError}</p>}
+      </div>
+
+      <div className="new-item-card">
+        <h2>İlan Katılım Tercihi</h2>
+        <p className="muted" style={{ marginTop: 0, marginBottom: 12 }}>
+          Senin açtığın ilanlara (sipariş/yolculuk) biri "Katıl" dediğinde ne olsun?
+        </p>
+        <div className="card-actions" style={{ marginTop: 0 }}>
+          <button
+            className="btn-secondary"
+            disabled={joinApprovalSaving}
+            onClick={handleJoinApprovalToggle}
+          >
+            {joinApprovalSaving
+              ? 'Kaydediliyor...'
+              : requireJoinApproval
+                ? 'Önce Onayımı İste ✓'
+                : 'Direkt Katılabilsinler'}
+          </button>
+        </div>
+        <p className="muted" style={{ marginTop: 8, marginBottom: 0, fontSize: '0.8rem' }}>
+          {requireJoinApproval
+            ? 'Biri katılmak isteyince önce sana bir istek gelecek, sen onaylayana kadar kontenjana eklenmeyecek.'
+            : 'Biri "Katıl"a basınca anında kontenjana eklenir, onayına gerek kalmaz.'}
+        </p>
       </div>
 
       <div className="new-item-card">

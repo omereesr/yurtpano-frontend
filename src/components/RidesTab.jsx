@@ -82,32 +82,53 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
     setError('')
     setItemBusy(id, 'join', true)
 
-    const prevRides = rides
-    setRides((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r
-        const newSeatsTaken = r.seatsTaken + 1
-        return {
-          ...r,
-          seatsTaken: newSeatsTaken,
-          status: newSeatsTaken >= r.seatsTotal ? 'closed' : r.status,
-          participants: [
-            ...r.participants,
-            { id: `optimistic-${Date.now()}`, user: { id: user.id, name: user.name, roomNo: user.roomNo } },
-          ],
-        }
-      })
-    )
-
+    // NOT: sahibi onay istiyorsa bu bir KOLTUK KAPMA degil, bir ISTEK
+    // olur - optimistic guncelleme yapamayiz, once sunucudan sonucu
+    // ogrenmemiz gerekiyor.
     try {
-      await api.joinRide(id)
-      toast('Koltugu kaptin!')
+      const result = await api.joinRide(id)
+      if (result?.pending) {
+        toast('İstek gönderildi, sahibi onaylayınca katılmış olacaksın.')
+      } else {
+        toast('Koltugu kaptin!')
+      }
       await load(true)
     } catch (err) {
-      setRides(prevRides)
       setError(err.message)
     } finally {
       setItemBusy(id, 'join', false)
+    }
+  }
+
+  async function handleApproveJoin(rideId, userId) {
+    const key = `${rideId}:approve:${userId}`
+    if (busy[key]) return
+    setBusy((b) => ({ ...b, [key]: true }))
+    setError('')
+    try {
+      await api.approveRideJoin(rideId, userId)
+      toast('Katılım onaylandı.')
+      await load(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy((b) => ({ ...b, [key]: false }))
+    }
+  }
+
+  async function handleDeclineJoin(rideId, userId) {
+    const key = `${rideId}:decline:${userId}`
+    if (busy[key]) return
+    setBusy((b) => ({ ...b, [key]: true }))
+    setError('')
+    try {
+      await api.declineRideJoin(rideId, userId)
+      toast('İstek reddedildi.')
+      await load(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy((b) => ({ ...b, [key]: false }))
     }
   }
 
@@ -275,6 +296,37 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                 <p className="card-meta">
                   Koltuk: {r.seatsTaken}/{r.seatsTotal}
                 </p>
+                {r.ownerId === user.id && r.pendingParticipants?.length > 0 && (
+                  <div className="participants-card" style={{ borderColor: 'var(--accent-amber)' }}>
+                    <p className="participants-card-title">
+                      ⏳ Bekleyen İstekler ({r.pendingParticipants.length})
+                    </p>
+                    <ul className="participants-list">
+                      {r.pendingParticipants.map((p) => (
+                        <li key={p.id} className="participant-row">
+                          <Avatar name={p.user?.name} size={26} />
+                          <span className="participant-name">{p.user?.name}</span>
+                          <div className="participant-actions">
+                            <button
+                              className="btn-secondary"
+                              disabled={busy[`${r.id}:approve:${p.user.id}`]}
+                              onClick={() => handleApproveJoin(r.id, p.user.id)}
+                            >
+                              Onayla
+                            </button>
+                            <button
+                              className="btn-link participant-remove"
+                              disabled={busy[`${r.id}:decline:${p.user.id}`]}
+                              onClick={() => handleDeclineJoin(r.id, p.user.id)}
+                            >
+                              Reddet
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <ParticipantsCard
                   participants={r.participants}
                   isOwner={r.ownerId === user.id}

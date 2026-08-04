@@ -483,7 +483,13 @@ select:focus {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 8px 12px;
-  max-width: 80%;
+  /* ONEMLI: sabit "80%" kullanmiyoruz artik - yanina yanitla/tepki
+     ikonlari da eklendigi icin (80% + ikonlarin genisligi) dar
+     telefonlarda satirin toplam genisligini asip sagda tasmaya/
+     bosluga sebep oluyordu. Ikonlara yetecek sabit bir pay (64px)
+     ayirip GERI KALANI balona veriyoruz - boylece toplam satir HER
+     ZAMAN konteynerin icinde kaliyor. */
+  max-width: calc(100% - 64px);
   min-width: 0; /* flex icinde icerigin tasmasini engellemek icin sart */
   overflow-wrap: break-word; /* uzun/bosluksuz kelimeler balonu yatay genisletmesin */
   word-break: break-word;
@@ -1344,6 +1350,7 @@ input:-webkit-autofill:focus {
   max-width: 100%;
   align-items: center;
   gap: 4px;
+  overflow-x: hidden;
 }
 .message-group.mine .message-bubble-row {
   justify-content: flex-end;

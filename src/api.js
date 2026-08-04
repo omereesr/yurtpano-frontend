@@ -67,6 +67,8 @@ export const api = {
   closeOrder: (id) => request(`/orders/${id}/close`, { method: 'POST' }),
   cancelOrder: (id) => request(`/orders/${id}/cancel`, { method: 'POST' }),
   removeOrderParticipant: (id, userId) => request(`/orders/${id}/participants/${userId}/remove`, { method: 'POST' }),
+  approveOrderJoin: (id, userId) => request(`/orders/${id}/join-requests/${userId}/approve`, { method: 'POST' }),
+  declineOrderJoin: (id, userId) => request(`/orders/${id}/join-requests/${userId}/decline`, { method: 'POST' }),
 
   getRequests: (dormId) => request(dormId ? `/requests?dormId=${dormId}` : '/requests'),
   createRequest: (payload) => request('/requests', { method: 'POST', body: payload }),
@@ -79,6 +81,8 @@ export const api = {
   leaveRide: (id) => request(`/rides/${id}/leave`, { method: 'POST' }),
   cancelRide: (id) => request(`/rides/${id}/cancel`, { method: 'POST' }),
   removeRideParticipant: (id, userId) => request(`/rides/${id}/participants/${userId}/remove`, { method: 'POST' }),
+  approveRideJoin: (id, userId) => request(`/rides/${id}/join-requests/${userId}/approve`, { method: 'POST' }),
+  declineRideJoin: (id, userId) => request(`/rides/${id}/join-requests/${userId}/decline`, { method: 'POST' }),
 
   getListings: (dormId) => request(dormId ? `/listings?dormId=${dormId}` : '/listings'),
   createListing: (payload) => request('/listings', { method: 'POST', body: payload }),
@@ -112,6 +116,8 @@ export const api = {
       request('/profile/email', { method: 'PUT', body: { email, currentPassword } }),
     setNotifications: (dmNotifications) =>
       request('/profile/notifications', { method: 'PUT', body: { dmNotifications } }),
+    setJoinApproval: (requireJoinApproval) =>
+      request('/profile/join-approval', { method: 'PUT', body: { requireJoinApproval } }),
     deactivate: (currentPassword) =>
       request('/profile/deactivate', { method: 'POST', body: { currentPassword } }),
     rate: (userId, score, comment) =>

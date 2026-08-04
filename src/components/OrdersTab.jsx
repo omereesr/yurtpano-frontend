@@ -87,34 +87,54 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
     setError('')
     setItemBusy(id, 'join', true)
 
-    // ONCE ekrani guncelle (sunucu cevabini beklemeden) - butona basar
-    // basmaz "katildim" hissi versin. Hata donerse asagida geri aliyoruz.
-    const prevOrders = orders
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id !== id) return o
-        const newJoinedCount = o.joinedCount + 1
-        return {
-          ...o,
-          joinedCount: newJoinedCount,
-          status: newJoinedCount >= o.capacity ? 'closed' : o.status,
-          participants: [
-            ...o.participants,
-            { id: `optimistic-${Date.now()}`, user: { id: user.id, name: user.name, roomNo: user.roomNo } },
-          ],
-        }
-      })
-    )
-
+    // NOT: burada artik "optimistic" (once ekrani guncelle) yapamiyoruz -
+    // cunku sahibi onay istiyorsa bu bir KATILIM DEGIL, bir ISTEK olur,
+    // kontenjani hic degistirmez. Sonucu once sunucudan ogrenip ona gore
+    // dogru mesaji gostermemiz gerekiyor.
     try {
-      await api.joinOrder(id)
-      toast('Siparise katildin!')
-      await load(true) // gercek veriyle sessizce mutabakat (silent reconcile)
+      const result = await api.joinOrder(id)
+      if (result?.pending) {
+        toast('İstek gönderildi, sahibi onaylayınca katılmış olacaksın.')
+      } else {
+        toast('Siparise katildin!')
+      }
+      await load(true) // sessizce guncel veriyle senkronize et
     } catch (err) {
-      setOrders(prevOrders) // geri al
       setError(err.message)
     } finally {
       setItemBusy(id, 'join', false)
+    }
+  }
+
+  async function handleApproveJoin(orderId, userId) {
+    const key = `${orderId}:approve:${userId}`
+    if (busy[key]) return
+    setBusy((b) => ({ ...b, [key]: true }))
+    setError('')
+    try {
+      await api.approveOrderJoin(orderId, userId)
+      toast('Katılım onaylandı.')
+      await load(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy((b) => ({ ...b, [key]: false }))
+    }
+  }
+
+  async function handleDeclineJoin(orderId, userId) {
+    const key = `${orderId}:decline:${userId}`
+    if (busy[key]) return
+    setBusy((b) => ({ ...b, [key]: true }))
+    setError('')
+    try {
+      await api.declineOrderJoin(orderId, userId)
+      toast('İstek reddedildi.')
+      await load(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy((b) => ({ ...b, [key]: false }))
     }
   }
 
@@ -288,6 +308,38 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                 {o.minAmount && <p className="card-note">Min. sepet: {o.minAmount} TL</p>}
                 {o.note && <p className="card-note">{o.note}</p>}
                 <CapacityBar joined={o.joinedCount} capacity={o.capacity} />
+
+                {o.ownerId === user.id && o.pendingParticipants?.length > 0 && (
+                  <div className="participants-card" style={{ borderColor: 'var(--accent-amber)' }}>
+                    <p className="participants-card-title">
+                      ⏳ Bekleyen İstekler ({o.pendingParticipants.length})
+                    </p>
+                    <ul className="participants-list">
+                      {o.pendingParticipants.map((p) => (
+                        <li key={p.id} className="participant-row">
+                          <Avatar name={p.user?.name} size={26} />
+                          <span className="participant-name">{p.user?.name}</span>
+                          <div className="participant-actions">
+                            <button
+                              className="btn-secondary"
+                              disabled={busy[`${o.id}:approve:${p.user.id}`]}
+                              onClick={() => handleApproveJoin(o.id, p.user.id)}
+                            >
+                              Onayla
+                            </button>
+                            <button
+                              className="btn-link participant-remove"
+                              disabled={busy[`${o.id}:decline:${p.user.id}`]}
+                              onClick={() => handleDeclineJoin(o.id, p.user.id)}
+                            >
+                              Reddet
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <ParticipantsCard
                   participants={o.participants}
