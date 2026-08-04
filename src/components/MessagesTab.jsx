@@ -9,13 +9,18 @@ import EmptyState from './EmptyState'
 import { formatClock } from '../utils/time'
 
 const CONTEXT_LABELS = {
-  listing: 'Ikinci El Ilani',
-  request: 'Sosyallesme Ilani',
-  order: 'Ortak Siparis',
+  listing: 'İkinci El İlanı',
+  request: 'Sosyalleşme İlanı',
+  order: 'Ortak Sipariş',
   ride: 'Yolculuk',
 }
 const CONTEXT_TABS = { listing: 'listings', request: 'requests', order: 'orders', ride: 'rides' }
+const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
 
+// Butun sekme artik tam yukseklikte, WhatsApp benzeri bir "kabuk" -
+// normal sayfa dolgusunu/kaydirmasini iptal edip kendi ic kaydirmasini
+// yonetiyor (.messages-shell). Liste ve konusma ayni "ekran" gibi
+// birbirinin yerine geciyor (mobilde WhatsApp'in yaptigi gibi).
 export default function MessagesTab({ onNavigate }) {
   const [view, setView] = useState('sohbetler') // sohbetler | istekler
   const [all, setAll] = useState([])
@@ -36,8 +41,6 @@ export default function MessagesTab({ onNavigate }) {
 
   useEffect(() => {
     load()
-
-    // Yeni bir mesaj ya da mesaj istegi geldiginde listeyi canli guncelle.
     const socket = getSocket()
     if (!socket) return
     const refresh = () => load()
@@ -52,100 +55,96 @@ export default function MessagesTab({ onNavigate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // "Sohbetler": kabul edilmis konusmalar + kendi gonderdigim ("baslattigim")
-  // bekleyen istekler (kendi gonderdigin istek senin için bir sohbet gibi
-  // gorunur, karsi tarafta ise "istek" olarak kalir).
   const sohbetler = all.filter((c) => c.status === 'accepted' || (c.status === 'pending' && c.isInitiator))
-  // "Istekler": sadece BASKASININ sana gonderdigi, henuz cevap vermedigin istekler.
   const istekler = all.filter((c) => c.status === 'pending' && !c.isInitiator)
-
   const list = view === 'sohbetler' ? sohbetler : istekler
 
   if (activeId) {
     return (
-      <div className="tab-content">
-        <button
-          className="btn-link"
-          onClick={() => {
-            setActiveId(null)
-            load()
-          }}
-        >
-          ← Listeye don
-        </button>
-        <ConversationThread conversationId={activeId} onChanged={load} onNavigate={onNavigate} />
-      </div>
+      <ConversationThread
+        conversationId={activeId}
+        onBack={() => {
+          setActiveId(null)
+          load()
+        }}
+        onChanged={load}
+        onNavigate={onNavigate}
+      />
     )
   }
 
   return (
-    <div className="tab-content">
-      <div className="admin-subnav">
-        <button
-          className={view === 'sohbetler' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
-          onClick={() => setView('sohbetler')}
-        >
-          Sohbetler {sohbetler.length > 0 ? `(${sohbetler.length})` : ''}
-        </button>
-        <button
-          className={view === 'istekler' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
-          onClick={() => setView('istekler')}
-        >
-          Istekler {istekler.length > 0 ? `(${istekler.length})` : ''}
-        </button>
+    <div className="messages-shell">
+      <div className="messages-header">
+        <div className="admin-subnav" style={{ margin: 0, border: 'none', padding: 0 }}>
+          <button
+            className={view === 'sohbetler' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
+            onClick={() => setView('sohbetler')}
+          >
+            Sohbetler {sohbetler.length > 0 ? `(${sohbetler.length})` : ''}
+          </button>
+          <button
+            className={view === 'istekler' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
+            onClick={() => setView('istekler')}
+          >
+            İstekler {istekler.length > 0 ? `(${istekler.length})` : ''}
+          </button>
+        </div>
       </div>
 
-      {error && <p className="form-error">{error}</p>}
-      {loading ? (
-        <p className="muted">Yükleniyor...</p>
-      ) : list.length === 0 ? (
-        <EmptyState
-          kind="chat"
-          title={view === 'sohbetler' ? 'Henuz bir sohbetin yok.' : 'Bekleyen mesaj istegin yok.'}
-          subtitle={view === 'sohbetler' ? 'Bir ilana mesaj gonderdiginde burada gorunecek.' : ''}
-        />
-      ) : (
-        <ul className="card-list">
-          {list.map((c) => (
-            <li
-              key={c.id}
-              className={c.unread ? 'card conversation-unread' : 'card'}
-              onClick={() => setActiveId(c.id)}
-              style={{ cursor: 'pointer' }}
-            >
-              {c.contextTitle && (
-                <button
-                  type="button"
-                  className="card-tag context-tag-link"
-                  onClick={(e) => {
-                    e.stopPropagation() // konusmayi acmasin, direkt ilana gitsin
-                    onNavigate?.(CONTEXT_TABS[c.contextType] || 'feed')
-                  }}
-                >
-                  {CONTEXT_LABELS[c.contextType] || 'İlan'}: {c.contextTitle} ↗
-                </button>
-              )}
-              <div className="feed-card-header" style={{ marginTop: 6 }}>
-                {c.unread && <span className="unread-dot" title="Okunmadi" />}
-                <Avatar name={c.otherUser?.name} size={28} isSystem={c.otherUser?.isSystem} />
-                <h3 style={{ margin: 0 }} className={c.unread ? 'conversation-unread-title' : ''}>
-                  {c.otherUser?.isSystem ? (
-                    c.otherUser?.name
-                  ) : (
-                    <ProfileLink userId={c.otherUser?.id} name={c.otherUser?.name} />
-                  )}
-                </h3>
-              </div>
-              {c.lastMessage && (
-                <p className={c.unread ? 'card-note conversation-unread-preview' : 'card-note'}>
-                  {c.lastMessage.body}
-                </p>
-              )}
-              {view === 'istekler' && <RequestActions conversationId={c.id} onDone={load} />}
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="messages-scroll">
+        {error && <p className="form-error">{error}</p>}
+        {loading ? (
+          <p className="muted">Yükleniyor...</p>
+        ) : list.length === 0 ? (
+          <EmptyState
+            kind="chat"
+            title={view === 'sohbetler' ? 'Henüz bir sohbetin yok.' : 'Bekleyen mesaj isteğin yok.'}
+            subtitle={view === 'sohbetler' ? 'Bir ilana mesaj gönderdiğinde burada görünecek.' : ''}
+          />
+        ) : (
+          <ul className="card-list">
+            {list.map((c) => (
+              <li
+                key={c.id}
+                className={c.unread ? 'card conversation-unread' : 'card'}
+                onClick={() => setActiveId(c.id)}
+                style={{ cursor: 'pointer' }}
+              >
+                {c.contextTitle && (
+                  <button
+                    type="button"
+                    className="card-tag context-tag-link"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onNavigate?.(CONTEXT_TABS[c.contextType] || 'feed')
+                    }}
+                  >
+                    {CONTEXT_LABELS[c.contextType] || 'İlan'}: {c.contextTitle} ↗
+                  </button>
+                )}
+                <div className="feed-card-header" style={{ marginTop: 6 }}>
+                  {c.unread && <span className="unread-dot" title="Okunmadı" />}
+                  <Avatar name={c.otherUser?.name} size={28} isSystem={c.otherUser?.isSystem} />
+                  <h3 style={{ margin: 0 }} className={c.unread ? 'conversation-unread-title' : ''}>
+                    {c.otherUser?.isSystem ? (
+                      c.otherUser?.name
+                    ) : (
+                      <ProfileLink userId={c.otherUser?.id} name={c.otherUser?.name} />
+                    )}
+                  </h3>
+                </div>
+                {c.lastMessage && (
+                  <p className={c.unread ? 'card-note conversation-unread-preview' : 'card-note'}>
+                    {c.lastMessage.body}
+                  </p>
+                )}
+                {view === 'istekler' && <RequestActions conversationId={c.id} onDone={load} />}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }
@@ -181,7 +180,7 @@ function RequestActions({ conversationId, onDone }) {
   )
 }
 
-function ConversationThread({ conversationId, onChanged, onNavigate }) {
+function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const { user } = useAuth()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -189,10 +188,9 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
   const [sending, setSending] = useState(false)
   const [otherTyping, setOtherTyping] = useState(false)
   const [otherLastReadAt, setOtherLastReadAt] = useState(null)
+  const [replyTo, setReplyTo] = useState(null) // { id, body, senderName }
   const threadRef = useRef(null)
 
-  // Mesaj listesi degistikce (ilk yuklenme, yeni mesaj gelince/gonderilince)
-  // WhatsApp/Instagram gibi otomatik olarak EN ALTA (en yeni mesaja) kay.
   useEffect(() => {
     if (threadRef.current) {
       threadRef.current.scrollTop = threadRef.current.scrollHeight
@@ -204,9 +202,6 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
       const result = await api.messages.getMessages(conversationId)
       setData(result)
       setOtherLastReadAt(result.conversation.otherLastReadAt)
-      // Bu istek backend'de "okundu" zamanini da guncelliyor - ust bardaki
-      // zil/avatar rozetindeki sayinin ANINDA dusmesi için global bir event
-      // yayinliyoruz (F5 atmadan).
       window.dispatchEvent(new Event('yurtpano:messages-read'))
     } catch (err) {
       setError(err.message)
@@ -241,15 +236,30 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
       if (payload.conversationId !== conversationId) return
       setOtherLastReadAt(new Date().toISOString())
     }
+    function handleReaction(payload) {
+      if (payload.conversationId !== conversationId) return
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              messages: prev.messages.map((m) =>
+                m.id === payload.messageId ? { ...m, reactions: payload.reactions } : m
+              ),
+            }
+          : prev
+      )
+    }
     socket.on('message:new', handleNewMessage)
     socket.on('message:deleted', handleDeleted)
     socket.on('typing', handleTyping)
     socket.on('messages:read', handleRead)
+    socket.on('reaction:changed', handleReaction)
     return () => {
       socket.off('message:new', handleNewMessage)
       socket.off('message:deleted', handleDeleted)
       socket.off('typing', handleTyping)
       socket.off('messages:read', handleRead)
+      socket.off('reaction:changed', handleReaction)
       clearTimeout(typingTimeout)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -270,8 +280,9 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
     setSending(true)
     setError('')
     try {
-      const message = await api.messages.send(conversationId, body.trim())
+      const message = await api.messages.send(conversationId, body.trim(), replyTo?.id)
       setBody('')
+      setReplyTo(null)
       setData((prev) => (prev ? { ...prev, messages: [...prev.messages, message] } : prev))
       onChanged()
     } catch (err) {
@@ -292,22 +303,60 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
     }
   }
 
+  async function handleReact(messageId, emoji) {
+    // Iyimser (optimistic) guncelleme: sunucuyu beklemeden aninda goster.
+    setData((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        messages: prev.messages.map((m) => {
+          if (m.id !== messageId) return m
+          const mine = m.reactions?.find((r) => r.user?.id === user.id)
+          let reactions = m.reactions || []
+          if (mine && mine.emoji === emoji) {
+            reactions = reactions.filter((r) => r.id !== mine.id)
+          } else if (mine) {
+            reactions = reactions.map((r) => (r.id === mine.id ? { ...r, emoji } : r))
+          } else {
+            reactions = [...reactions, { id: `temp-${Date.now()}`, emoji, user: { id: user.id, name: user.name } }]
+          }
+          return { ...m, reactions }
+        }),
+      }
+    })
+    try {
+      await api.messages.react(messageId, emoji)
+    } catch (err) {
+      load() // hata olursa gercek veriyle senkronize et
+    }
+  }
+
+  function scrollToMessage(messageId) {
+    const el = threadRef.current?.querySelector(`[data-message-id="${messageId}"]`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('message-bubble-flash')
+      setTimeout(() => el.classList.remove('message-bubble-flash'), 900)
+    }
+  }
+
   if (error && !data) return <p className="form-error">{error}</p>
   if (!data) return <p className="muted">Yükleniyor...</p>
 
   const otherUser = data.conversation.otherUser
   const isSystemThread = !!otherUser?.isSystem
   const isPendingForMe = data.conversation.status === 'pending' && data.conversation.initiatorId !== user.id
-  // Benim gonderdigim son mesaj, karsi tarafin "okundu" zamanindan ONCE
-  // gonderilmisse "Görüldü" gosterebiliriz.
   const myMessages = data.messages.filter((m) => m.senderId === user.id)
   const lastMineId = myMessages.length > 0 ? myMessages[myMessages.length - 1].id : null
 
   return (
-    <div className="new-item-card" style={{ marginTop: 14 }}>
-      <div className="feed-card-header">
+    <div className="messages-shell">
+      <div className="messages-header thread-header">
+        <button className="btn-link thread-back" onClick={onBack}>
+          ←
+        </button>
         <Avatar name={otherUser?.name} size={32} isSystem={isSystemThread} />
-        <h3 style={{ margin: 0 }}>
+        <h3 style={{ margin: 0, flex: 1 }}>
           {isSystemThread ? otherUser?.name : <ProfileLink userId={otherUser?.id} name={otherUser?.name} />}
         </h3>
         {!isSystemThread && (
@@ -315,50 +364,25 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
         )}
       </div>
 
-      {data.conversation.contextTitle && (
-        <button
-          type="button"
-          className="card-tag context-tag-link"
-          onClick={() => onNavigate?.(CONTEXT_TABS[data.conversation.contextType] || 'feed')}
-        >
-          {CONTEXT_LABELS[data.conversation.contextType] || 'İlan'}: {data.conversation.contextTitle} ↗
-        </button>
-      )}
-
-      <div className="message-thread" ref={threadRef}>
-        {data.messages.map((m) => (
-          <div key={m.id} className={m.senderId === user.id ? 'message-bubble mine' : 'message-bubble'}>
-            <p>{m.body}</p>
-
-            {/* Sistem mesaji "X kisi ilanina katıldı" ise, direkt o kisiye
-                gidip mesaj atabilecegin ve ilana gidebilecegin kucuk
-                baglantilar göster. */}
-            {m.refUserId && (
-              <div className="message-ref-chip">
-                👤 <ProfileLink userId={m.refUserId} name={m.refUserName} />
-              </div>
-            )}
-            {m.refContextId && onNavigate && (
-              <button
-                className="message-ref-chip message-ref-link"
-                onClick={() => onNavigate(CONTEXT_TABS[m.refContextType] || 'feed')}
-              >
-                📎 {m.refContextTitle || 'Ilana git'}
-              </button>
-            )}
-
-            <div className="message-bubble-meta">
-              <span className="message-bubble-time">{formatClock(m.createdAt)}</span>
-              {m.senderId === user.id && (
-                <button className="message-bubble-delete" onClick={() => handleDelete(m.id)}>
-                  Sil
-                </button>
-              )}
-            </div>
-            {m.id === lastMineId && otherLastReadAt && new Date(m.createdAt) <= new Date(otherLastReadAt) && (
-              <span className="read-receipt">Görüldü ✓✓</span>
-            )}
-          </div>
+      <div className="messages-scroll" ref={threadRef}>
+        {data.messages.map((m, i) => (
+          <MessageBubble
+            key={m.id}
+            message={m}
+            isMine={m.senderId === user.id}
+            showContextTag={i === 0 && data.conversation.contextTitle}
+            contextLabel={CONTEXT_LABELS[data.conversation.contextType] || 'İlan'}
+            contextTitle={data.conversation.contextTitle}
+            onNavigateToContext={() => onNavigate?.(CONTEXT_TABS[data.conversation.contextType] || 'feed')}
+            onNavigate={onNavigate}
+            onDelete={() => handleDelete(m.id)}
+            onReply={() => setReplyTo({ id: m.id, body: m.body, senderName: m.sender?.name })}
+            onReact={(emoji) => handleReact(m.id, emoji)}
+            onQuoteClick={() => m.replyToId && scrollToMessage(m.replyToId)}
+            showReadReceipt={
+              m.id === lastMineId && otherLastReadAt && new Date(m.createdAt) <= new Date(otherLastReadAt)
+            }
+          />
         ))}
       </div>
 
@@ -373,21 +397,191 @@ function ConversationThread({ conversationId, onChanged, onNavigate }) {
           }}
         />
       ) : data.conversation.status === 'declined' ? (
-        <p className="card-note">Bu mesaj istegi reddedildi, artik mesaj gonderemezsin.</p>
+        <p className="card-note" style={{ padding: '0 14px 14px' }}>
+          Bu mesaj isteği reddedildi, artık mesaj gönderemezsin.
+        </p>
       ) : (
-        <form onSubmit={handleSend} className="inline-form" style={{ marginTop: 12 }}>
-          <textarea
-            placeholder="Mesajini yaz..."
-            value={body}
-            onChange={(e) => handleTypingInput(e.target.value)}
-            rows={2}
-          />
+        <form onSubmit={handleSend} className="messages-composer">
+          {replyTo && (
+            <div className="reply-preview-bar">
+              <div className="reply-preview-text">
+                <strong>{replyTo.senderName}</strong>
+                <span>{replyTo.body}</span>
+              </div>
+              <button type="button" className="reply-preview-cancel" onClick={() => setReplyTo(null)}>
+                ✕
+              </button>
+            </div>
+          )}
+          <div className="messages-composer-row">
+            <textarea
+              placeholder="Mesajını yaz..."
+              value={body}
+              onChange={(e) => handleTypingInput(e.target.value)}
+              rows={1}
+            />
+            <button className="btn-primary composer-send" type="submit" disabled={sending || !body.trim()}>
+              {sending ? '...' : 'Gönder'}
+            </button>
+          </div>
           {error && <p className="form-error">{error}</p>}
-          <button className="btn-primary" type="submit" disabled={sending || !body.trim()}>
-            {sending ? 'Gönderiliyor...' : 'Gönder'}
-          </button>
         </form>
       )}
+    </div>
+  )
+}
+
+// Tek bir mesaj balonu: yaniti (varsa) tirnak icinde gosterir, emoji
+// tepkilerini gosterir/toplar, ve WhatsApp'taki gibi "cek" (swipe) ile
+// veya kucuk bir butonla cevap verilebilir.
+function MessageBubble({
+  message: m,
+  isMine,
+  showContextTag,
+  contextLabel,
+  contextTitle,
+  onNavigateToContext,
+  onNavigate,
+  onDelete,
+  onReply,
+  onReact,
+  onQuoteClick,
+  showReadReceipt,
+}) {
+  const [dragX, setDragX] = useState(0)
+  const [showPicker, setShowPicker] = useState(false)
+  const touchStartX = useRef(null)
+
+  function handleTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX
+  }
+  function handleTouchMove(e) {
+    if (touchStartX.current === null) return
+    const delta = e.touches[0].clientX - touchStartX.current
+    // Sadece saga cekmeye (cevap ver jesti) izin ver, en fazla 70px.
+    setDragX(Math.max(0, Math.min(70, delta)))
+  }
+  function handleTouchEnd() {
+    if (dragX > 45) onReply()
+    setDragX(0)
+    touchStartX.current = null
+  }
+
+  // Tepkileri emoji'ye gore grupluyoruz: {emoji: [kullanicilar]}
+  const grouped = {}
+  ;(m.reactions || []).forEach((r) => {
+    if (!grouped[r.emoji]) grouped[r.emoji] = []
+    grouped[r.emoji].push(r.user?.name || '?')
+  })
+
+  return (
+    <div
+      className="message-group-wrap"
+      data-message-id={m.id}
+      style={{ transform: dragX ? `translateX(${dragX}px)` : undefined }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {dragX > 10 && <span className="swipe-reply-icon">↩</span>}
+      <div className={isMine ? 'message-group mine' : 'message-group'}>
+        {showContextTag && (
+          <button
+            type="button"
+            className={isMine ? 'card-tag context-tag-link context-tag-attached mine' : 'card-tag context-tag-link context-tag-attached'}
+            onClick={onNavigateToContext}
+          >
+            {contextLabel}: {contextTitle} ↗
+          </button>
+        )}
+
+        <div className="message-bubble-row">
+          {!isMine && (
+            <button type="button" className="message-hover-btn reply-btn" onClick={onReply} title="Yanıtla">
+              ↩
+            </button>
+          )}
+          <div className={isMine ? 'message-bubble mine' : 'message-bubble'}>
+            {m.replyToId && (
+              <button type="button" className="message-quote" onClick={onQuoteClick}>
+                <strong>{m.replyToSenderName}</strong>
+                <span>{m.replyToBody}</span>
+              </button>
+            )}
+            <p>{m.body}</p>
+
+            {m.refUserId && (
+              <div className="message-ref-chip">
+                👤 <ProfileLink userId={m.refUserId} name={m.refUserName} />
+              </div>
+            )}
+            {m.refContextId && onNavigate && (
+              <button
+                className="message-ref-chip message-ref-link"
+                onClick={() => onNavigate(CONTEXT_TABS[m.refContextType] || 'feed')}
+              >
+                📎 {m.refContextTitle || 'İlana git'}
+              </button>
+            )}
+
+            <div className="message-bubble-meta">
+              <span className="message-bubble-time">{formatClock(m.createdAt)}</span>
+              {isMine && (
+                <button className="message-bubble-delete" onClick={onDelete}>
+                  Sil
+                </button>
+              )}
+            </div>
+            {showReadReceipt && <span className="read-receipt">Görüldü ✓✓</span>}
+          </div>
+          {isMine && (
+            <button type="button" className="message-hover-btn reply-btn" onClick={onReply} title="Yanıtla">
+              ↩
+            </button>
+          )}
+          <button
+            type="button"
+            className="message-hover-btn react-btn"
+            onClick={() => setShowPicker((s) => !s)}
+            title="Tepki ver"
+          >
+            🙂
+          </button>
+        </div>
+
+        {showPicker && (
+          <div className="reaction-picker">
+            {QUICK_EMOJIS.map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => {
+                  onReact(e)
+                  setShowPicker(false)
+                }}
+              >
+                {e}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {Object.keys(grouped).length > 0 && (
+          <div className="reaction-pills">
+            {Object.entries(grouped).map(([emoji, names]) => (
+              <button
+                key={emoji}
+                type="button"
+                className="reaction-pill"
+                title={names.join(', ')}
+                onClick={() => onReact(emoji)}
+              >
+                {emoji} {names.length > 1 ? names.length : ''}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -123,9 +123,14 @@ export const api = {
     start: (payload) => request('/messages/start', { method: 'POST', body: payload }),
     getConversations: () => request('/messages/conversations'),
     getMessages: (conversationId) => request(`/messages/conversations/${conversationId}/messages`),
-    send: (conversationId, body) =>
-      request(`/messages/conversations/${conversationId}/messages`, { method: 'POST', body: { body } }),
+    send: (conversationId, body, replyToId) =>
+      request(`/messages/conversations/${conversationId}/messages`, {
+        method: 'POST',
+        body: replyToId ? { body, replyToId } : { body },
+      }),
     deleteMessage: (messageId) => request(`/messages/messages/${messageId}`, { method: 'DELETE' }),
+    react: (messageId, emoji) =>
+      request(`/messages/messages/${messageId}/react`, { method: 'POST', body: { emoji } }),
     accept: (conversationId) => request(`/messages/conversations/${conversationId}/accept`, { method: 'POST' }),
     decline: (conversationId) => request(`/messages/conversations/${conversationId}/decline`, { method: 'POST' }),
     getUnreadCount: () => request('/messages/unread-count'),

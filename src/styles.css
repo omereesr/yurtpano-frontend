@@ -272,6 +272,30 @@ select:focus {
 .context-tag-link:hover {
   background: rgba(47, 111, 94, 0.18);
 }
+
+/* --- Mesaj grubu: bir mesaj balonu + (varsa) uzerine yapisik ilan
+   etiketinden olusan birim. Balonun kendisiyle AYNI hizada (sol/sag)
+   dursun diye bu grubu hizaliyoruz, balonun kendisini degil. --- */
+.message-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.message-group.mine {
+  align-items: flex-end;
+}
+.context-tag-attached {
+  margin-bottom: -1px; /* balonun ust kenariyla tam birlessin, arada bosluk kalmasin */
+  border-radius: 10px 10px 0 0; /* alt kenar duz, tam balona oturuyor hissi versin */
+}
+.context-tag-attached + .message-bubble {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.context-tag-attached.mine {
+  border-radius: 10px 10px 0 0;
+}
 .card-note {
   color: var(--ink-soft);
   font-size: 0.88rem;
@@ -1150,4 +1174,238 @@ input:-webkit-autofill:focus {
 .participant-remove {
   color: var(--accent-urgent);
   font-size: 0.78rem;
+}
+
+/* =========================================================
+   MESAJLAR - WhatsApp tarzi tam yukseklik arayuz
+   ========================================================= */
+
+/* .app-main'in 16px dolgusunu iptal edip kenardan kenara yayiliyoruz,
+   ve mevcut ekran alanini (ust bar + alt bar disinda kalan) dolduruyoruz.
+   120px tahmini: ust bar (~56px) + alt sekme barinin kapladigi/biraktigi
+   bosluk (~60-64px) - piksel mukemmelligi sart degil, kucuk bir fark
+   olsa da ic kaydirma dogru calisir. */
+.messages-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 120px);
+  margin: -16px;
+  background: var(--paper);
+  overflow: hidden;
+}
+.messages-header {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card-bg);
+}
+.thread-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.thread-back {
+  font-size: 1.3rem;
+  padding: 4px 6px;
+  flex-shrink: 0;
+}
+.messages-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* --- Yazma kutusu: her zaman en altta sabit, kaymaz --- */
+.messages-composer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+  background: var(--card-bg);
+  padding: 8px 12px;
+}
+.messages-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.messages-composer-row textarea {
+  flex: 1;
+  resize: none;
+  max-height: 100px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 9px 14px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  background: var(--paper);
+  color: var(--ink);
+}
+.composer-send {
+  flex-shrink: 0;
+  border-radius: 20px;
+  padding: 9px 16px;
+}
+
+/* --- Yanitlama onizleme cubugu (composer'in ustunde) --- */
+.reply-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper);
+  border-left: 3px solid var(--accent-teal);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+}
+.reply-preview-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.reply-preview-text strong {
+  font-size: 0.75rem;
+  color: var(--accent-teal);
+}
+.reply-preview-text span {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reply-preview-cancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+/* --- Mesaj balonu grubu + cek-cevapla jesti --- */
+.message-group-wrap {
+  position: relative;
+  transition: transform 0.15s ease;
+}
+.swipe-reply-icon {
+  position: absolute;
+  left: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  color: var(--accent-teal);
+  opacity: 0.7;
+}
+.message-bubble-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.message-group.mine .message-bubble-row {
+  justify-content: flex-end;
+}
+.message-hover-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.message-group-wrap:hover .message-hover-btn {
+  opacity: 0.6;
+}
+.message-hover-btn:hover {
+  opacity: 1 !important;
+}
+.message-bubble-flash {
+  animation: bubble-flash 0.9s ease;
+}
+@keyframes bubble-flash {
+  0%, 100% { background: var(--paper); }
+  30% { background: rgba(226, 163, 61, 0.35); }
+}
+
+/* --- Alintilanan (yanit verilen) mesaj onizlemesi, balonun icinde --- */
+.message-quote {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.06);
+  border-left: 3px solid var(--accent-teal);
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+}
+.message-quote strong {
+  font-size: 0.72rem;
+  color: var(--accent-teal);
+}
+.message-quote span {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Emoji tepki secici (kucuk acilir kutu) --- */
+.reaction-picker {
+  display: flex;
+  gap: 4px;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 8px;
+  margin-top: 4px;
+  width: fit-content;
+}
+.message-group.mine .reaction-picker {
+  align-self: flex-end;
+}
+.reaction-picker button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 2px 4px;
+}
+.reaction-picker button:hover {
+  transform: scale(1.2);
+}
+
+/* --- Verilmis tepkilerin gosterildigi kucuk rozetler --- */
+.reaction-pills {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+.message-group.mine .reaction-pills {
+  justify-content: flex-end;
+}
+.reaction-pill {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1px 7px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .messages-shell {
+    height: calc(100dvh - 176px); /* mobilde alt sekme barinin sabit (fixed) yer kaplamasi da eklenir */
+  }
 }
