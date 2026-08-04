@@ -17,12 +17,8 @@ const CONTEXT_LABELS = {
 const CONTEXT_TABS = { listing: 'listings', request: 'requests', order: 'orders', ride: 'rides' }
 const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
 
-// Butun sekme artik tam yukseklikte, WhatsApp benzeri bir "kabuk" -
-// normal sayfa dolgusunu/kaydirmasini iptal edip kendi ic kaydirmasini
-// yonetiyor (.messages-shell). Liste ve konusma ayni "ekran" gibi
-// birbirinin yerine geciyor (mobilde WhatsApp'in yaptigi gibi).
 export default function MessagesTab({ onNavigate }) {
-  const [view, setView] = useState('sohbetler') // sohbetler | istekler
+  const [view, setView] = useState('sohbetler') 
   const [all, setAll] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -52,7 +48,6 @@ export default function MessagesTab({ onNavigate }) {
       socket.off('conversation:new', refresh)
       socket.off('conversation:accepted', refresh)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const sohbetler = all.filter((c) => c.status === 'accepted' || (c.status === 'pending' && c.isInitiator))
@@ -74,7 +69,8 @@ export default function MessagesTab({ onNavigate }) {
   }
 
   return (
-    <div className="messages-shell">
+    // TİTREME ÇÖZÜMÜ: overflowX: 'hidden' ve max/width ayarları eklendi
+    <div className="messages-shell" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
       <div className="messages-header">
         <div className="admin-subnav" style={{ margin: 0, border: 'none', padding: 0 }}>
           <button
@@ -188,36 +184,45 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const [sending, setSending] = useState(false)
   const [otherTyping, setOtherTyping] = useState(false)
   const [otherLastReadAt, setOtherLastReadAt] = useState(null)
-  const [replyTo, setReplyTo] = useState(null) // { id, body, senderName }
+  const [replyTo, setReplyTo] = useState(null)
   const threadRef = useRef(null)
   const shellRef = useRef(null)
 
-  // ONEMLI: dvh/yukseklik hesaplarina guvenmek yerine, klavye acikken
-  // GERCEKTE ne kadar alan kapladigini DOGRUDAN olcup, kabugun altina
-  // tam o kadar bosluk (padding) ekliyoruz. Bu, tarayicidan tarayiciya
-  // degisen "visualViewport kuculur mu / kayar mi" farklarindan
-  // BAGIMSIZ calisan, en guvenilir yontem.
+  // ALT MENÜYÜ GİZLEME VE KLAVYE HİZALAMASI
   useEffect(() => {
-    function updateKeyboardInset() {
+    // 1. Sohbet ekranına girince body'e class ekleyip çıkınca alıyoruz
+    // CSS tarafında '.hide-bottom-nav' sınıfı varken alt menüyü display: none yapmalısınız.
+    document.body.classList.add('hide-bottom-nav')
+
+    // 2. Padding yerine doğrudan top/height hesaplaması (WhatsApp benzeri kusursuz hizalama)
+    function applyViewport() {
       if (!shellRef.current || !window.visualViewport) return
       const vv = window.visualViewport
-      const inset = window.innerHeight - vv.height - vv.offsetTop
-      shellRef.current.style.paddingBottom = `${Math.max(0, Math.round(inset))}px`
+      
+      // Kapsayıcıyı tam olarak görünür alana eşitliyoruz
+      shellRef.current.style.height = `${vv.height}px`
+      shellRef.current.style.top = `${vv.offsetTop}px`
+      
+      // Sayfanın geri kalanının kaymasını engellemek için
+      window.scrollTo(0, 0)
     }
-    updateKeyboardInset()
-    window.visualViewport?.addEventListener('resize', updateKeyboardInset)
-    window.visualViewport?.addEventListener('scroll', updateKeyboardInset)
+
+    if (window.visualViewport) {
+      applyViewport()
+      window.visualViewport.addEventListener('resize', applyViewport)
+      window.visualViewport.addEventListener('scroll', applyViewport)
+    }
+
     return () => {
-      window.visualViewport?.removeEventListener('resize', updateKeyboardInset)
-      window.visualViewport?.removeEventListener('scroll', updateKeyboardInset)
+      document.body.classList.remove('hide-bottom-nav')
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', applyViewport)
+        window.visualViewport.removeEventListener('scroll', applyViewport)
+      }
     }
   }, [])
 
   useEffect(() => {
-    // requestAnimationFrame: tarayici yeni mesaji/yuksekligi tam
-    // yerlestirdikten SONRA kaydirmayi tetikler - aksi halde bazen
-    // (ozellikle ilk acilista) scrollHeight henuz guncel olmadan
-    // kaydirma yapilip en alta tam ulasamiyordu.
     const raf = requestAnimationFrame(() => {
       if (threadRef.current) {
         threadRef.current.scrollTop = threadRef.current.scrollHeight
@@ -239,7 +244,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
 
   useEffect(() => {
     load()
-
     const socket = getSocket()
     if (!socket) return
     let typingTimeout
@@ -291,7 +295,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
       socket.off('reaction:changed', handleReaction)
       clearTimeout(typingTimeout)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
 
   function handleTypingInput(value) {
@@ -301,17 +304,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
     if (socket && otherUserId && !data?.conversation?.otherUser?.isSystem) {
       socket.emit('typing', { conversationId, toUserId: otherUserId })
     }
-  }
-
-  // Telefonda klavye acilinca alt navigasyon barinin klavyenin ustunde
-  // garip bir sekilde durmasini/kaymasini onlemek icin, yazarken alt
-  // barin tamamen gizlenmesini sagliyoruz - sadece yazma kutusu kalir,
-  // tam klavyenin ustunde.
-  function handleComposerFocus() {
-    document.body.classList.add('composing')
-  }
-  function handleComposerBlur() {
-    document.body.classList.remove('composing')
   }
 
   async function handleSend(e) {
@@ -344,7 +336,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   }
 
   async function handleReact(messageId, emoji) {
-    // Iyimser (optimistic) guncelleme: sunucuyu beklemeden aninda goster.
     setData((prev) => {
       if (!prev) return prev
       return {
@@ -367,7 +358,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
     try {
       await api.messages.react(messageId, emoji)
     } catch (err) {
-      load() // hata olursa gercek veriyle senkronize et
+      load()
     }
   }
 
@@ -380,13 +371,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
     }
   }
 
-  // Konusma ekranindan cikarken (geri donunce, baska sekmeye gecince)
-  // "composing" sinifi yapiskan kalip alt bari sonsuza kadar gizli
-  // birakmasin diye guvenlik agi.
-  useEffect(() => {
-    return () => document.body.classList.remove('composing')
-  }, [])
-
   if (error && !data) return <p className="form-error">{error}</p>
   if (!data) return <p className="muted">Yükleniyor...</p>
 
@@ -397,7 +381,22 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const lastMineId = myMessages.length > 0 ? myMessages[myMessages.length - 1].id : null
 
   return (
-    <div className="messages-shell" ref={shellRef}>
+    // TAM EKRAN KAPLAMA: Sayfa düzeninden tamamen koparılıp üstte konumlanan sabit kapsayıcı
+    <div 
+      className="messages-shell" 
+      ref={shellRef}
+      style={{ 
+        position: 'fixed', 
+        left: 0, 
+        width: '100%', 
+        maxWidth: '100vw',
+        display: 'flex', 
+        flexDirection: 'column', 
+        zIndex: 9999, 
+        backgroundColor: 'var(--bg-color, #fff)',
+        overflowX: 'hidden'
+      }}
+    >
       <div className="messages-header thread-header">
         <button className="btn-link thread-back" onClick={onBack}>
           ←
@@ -465,8 +464,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
               placeholder="Mesajını yaz..."
               value={body}
               onChange={(e) => handleTypingInput(e.target.value)}
-              onFocus={handleComposerFocus}
-              onBlur={handleComposerBlur}
               rows={1}
             />
             <button className="btn-primary composer-send" type="submit" disabled={sending || !body.trim()}>
@@ -480,9 +477,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   )
 }
 
-// Tek bir mesaj balonu: yaniti (varsa) tirnak icinde gosterir, emoji
-// tepkilerini gosterir/toplar, ve WhatsApp'taki gibi "cek" (swipe) ile
-// veya kucuk bir butonla cevap verilebilir.
 function MessageBubble({
   message: m,
   isMine,
@@ -499,7 +493,6 @@ function MessageBubble({
 }) {
   const [showPicker, setShowPicker] = useState(false)
 
-  // Tepkileri emoji'ye gore grupluyoruz: {emoji: [kullanicilar]}
   const grouped = {}
   ;(m.reactions || []).forEach((r) => {
     if (!grouped[r.emoji]) grouped[r.emoji] = []
