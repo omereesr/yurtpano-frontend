@@ -61,7 +61,7 @@ body {
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh; /* min-height degil height - flex cocuklarina KESIN bir yukseklik referansi verir */
 }
 
 .top-bar {
@@ -151,6 +151,7 @@ body {
 
 .app-main {
   flex: 1;
+  min-height: 0; /* KRITIK: bu olmadan messages-shell "flex:1" dogru calismaz */
   padding: 16px;
   max-width: 640px;
   width: 100%;
@@ -947,6 +948,16 @@ input:-webkit-autofill:focus {
     padding: 6px 9px;
     font-size: 0.78rem;
   }
+
+  /* Mesaj yazarken (klavye acikken) alt navigasyon barini tamamen
+     gizliyoruz - boylece sadece yazma kutusu, klavyenin hemen ustunde
+     kaliyor, karisiklik/kayma olmuyor. */
+  body.composing .tab-bar {
+    display: none;
+  }
+  body.composing .app-shell {
+    padding-bottom: 0; /* artik sabit bar icin yer ayirmaya gerek yok */
+  }
 }
 
 .report-detail {
@@ -1188,7 +1199,7 @@ input:-webkit-autofill:focus {
 .messages-shell {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 120px);
+  height: 100%; /* app-main'in flex:1 ile ayirdigi ALANIN TAMAMI - artik piksel tahmini yok */
   margin: -16px;
   background: var(--paper);
   overflow: hidden;
@@ -1212,10 +1223,16 @@ input:-webkit-autofill:focus {
 .messages-scroll {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* saga-sola kaymasin */
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  scrollbar-width: none; /* Firefox - kaydirma cubugu gorunmesin */
+  -ms-overflow-style: none; /* eski Edge/IE */
+}
+.messages-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/yeni Edge */
 }
 
 /* --- Yazma kutusu: her zaman en altta sabit, kaymaz --- */
@@ -1406,6 +1423,6 @@ input:-webkit-autofill:focus {
 
 @media (max-width: 640px) {
   .messages-shell {
-    height: calc(100dvh - 176px); /* mobilde alt sekme barinin sabit (fixed) yer kaplamasi da eklenir */
+    height: 100%; /* app-shell height:100dvh oldugu icin burada da ekstra hesaba gerek yok */
   }
 }

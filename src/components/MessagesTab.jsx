@@ -192,9 +192,16 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const threadRef = useRef(null)
 
   useEffect(() => {
-    if (threadRef.current) {
-      threadRef.current.scrollTop = threadRef.current.scrollHeight
-    }
+    // requestAnimationFrame: tarayici yeni mesaji/yuksekligi tam
+    // yerlestirdikten SONRA kaydirmayi tetikler - aksi halde bazen
+    // (ozellikle ilk acilista) scrollHeight henuz guncel olmadan
+    // kaydirma yapilip en alta tam ulasamiyordu.
+    const raf = requestAnimationFrame(() => {
+      if (threadRef.current) {
+        threadRef.current.scrollTop = threadRef.current.scrollHeight
+      }
+    })
+    return () => cancelAnimationFrame(raf)
   }, [data?.messages?.length, otherTyping])
 
   async function load() {
@@ -274,6 +281,17 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
     }
   }
 
+  // Telefonda klavye acilinca alt navigasyon barinin klavyenin ustunde
+  // garip bir sekilde durmasini/kaymasini onlemek icin, yazarken alt
+  // barin tamamen gizlenmesini sagliyoruz - sadece yazma kutusu kalir,
+  // tam klavyenin ustunde.
+  function handleComposerFocus() {
+    document.body.classList.add('composing')
+  }
+  function handleComposerBlur() {
+    document.body.classList.remove('composing')
+  }
+
   async function handleSend(e) {
     e.preventDefault()
     if (!body.trim() || sending) return
@@ -339,6 +357,13 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
       setTimeout(() => el.classList.remove('message-bubble-flash'), 900)
     }
   }
+
+  // Konusma ekranindan cikarken (geri donunce, baska sekmeye gecince)
+  // "composing" sinifi yapiskan kalip alt bari sonsuza kadar gizli
+  // birakmasin diye guvenlik agi.
+  useEffect(() => {
+    return () => document.body.classList.remove('composing')
+  }, [])
 
   if (error && !data) return <p className="form-error">{error}</p>
   if (!data) return <p className="muted">Yükleniyor...</p>
@@ -418,6 +443,8 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
               placeholder="Mesajını yaz..."
               value={body}
               onChange={(e) => handleTypingInput(e.target.value)}
+              onFocus={handleComposerFocus}
+              onBlur={handleComposerBlur}
               rows={1}
             />
             <button className="btn-primary composer-send" type="submit" disabled={sending || !body.trim()}>
