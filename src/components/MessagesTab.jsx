@@ -17,6 +17,48 @@ const CONTEXT_LABELS = {
 const CONTEXT_TABS = { listing: 'listings', request: 'requests', order: 'orders', ride: 'rides' }
 const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
 
+// Konusma ekranini (bir sohbetin icini) cihazin GORUNUR alanina tam
+// oturtan hook - klavye acildiginda/kapandiginda otomatik guncellenir.
+// SADECE konusma ekraninda kullaniliyor (liste ekrani normal sayfa
+// akisinda kalip alt navigasyon menusunu gizlemiyor - kullanici mesaj
+// listesindeyken diger sekmelere gecebilmeli).
+function useFixedViewport(ref) {
+  useEffect(() => {
+    function sync() {
+      if (!ref.current) return
+      const vv = window.visualViewport
+      const el = ref.current
+      el.style.position = 'fixed'
+      el.style.left = '0px'
+      el.style.right = '0px'
+      // width/max-width'i INLINE olarak sifirliyoruz - CSS sinifinda
+      // kalintı "width:100%" gibi bir deger olsa bile (position:fixed'te
+      // left+right+width ayni anda olunca "right" yok sayilir kuralindan
+      // dolayi) artik hicbir sekilde etkili olamaz.
+      el.style.width = 'auto'
+      el.style.maxWidth = 'none'
+      el.style.margin = '0px'
+      el.style.zIndex = '200'
+      if (vv) {
+        el.style.top = `${vv.offsetTop}px`
+        el.style.height = `${vv.height}px`
+      } else {
+        el.style.top = '0px'
+        el.style.height = `${window.innerHeight}px`
+      }
+    }
+    sync()
+    window.visualViewport?.addEventListener('resize', sync)
+    window.visualViewport?.addEventListener('scroll', sync)
+    window.addEventListener('orientationchange', sync)
+    return () => {
+      window.visualViewport?.removeEventListener('resize', sync)
+      window.visualViewport?.removeEventListener('scroll', sync)
+      window.removeEventListener('orientationchange', sync)
+    }
+  }, [ref])
+}
+
 // Butun sekme artik tam yukseklikte, WhatsApp benzeri bir "kabuk" -
 // normal sayfa dolgusunu/kaydirmasini iptal edip kendi ic kaydirmasini
 // yonetiyor (.messages-shell). Liste ve konusma ayni "ekran" gibi
@@ -191,61 +233,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const [replyTo, setReplyTo] = useState(null) // { id, body, senderName }
   const threadRef = useRef(null)
   const shellRef = useRef(null)
-
-  // ONEMLI: paddingBottom ile "bosluk birakma" yaklasimi katman katman
-  // (flexbox + box-model) hesaplara bagimli oldugu icin guvenilmez cikti.
-  // Bunun yerine konusma kabugunu DOGRUDAN sabit (fixed) konuma alip,
-  // top/height degerlerini HER an cihazin GERCEK gorunur alanina
-  // (visualViewport) esitliyoruz. Klavye acildiginda/kapandiginda bu
-  // olay tetiklenir ve kabuk o an ekranda GERCEKTEN gorunen alani
-  // piksel piksel takip eder - yazma kutusu boylece klavyeye yapisir.
-  useEffect(() => {
-    function syncToVisibleViewport() {
-      if (!shellRef.current) return
-      const vv = window.visualViewport
-      const el = shellRef.current
-      el.style.position = 'fixed'
-      el.style.left = '0px'
-      el.style.right = '0px'
-      // KRITIK BUG DUZELTMESI: .messages-shell CSS sinifinda hala
-      // "width: 100%; max-width: 100vw;" tanimliydi ve bunlari hic
-      // GECERSIZ KILMAMISTIM. CSS kurali geregi, position:fixed bir
-      // elementte left + right + width AYNI ANDA tanimliysa, tarayici
-      // "right"i YOK SAYAR ve genisligi left+width'ten hesaplar - yani
-      // right:0 ayarim hicbir zaman gercekten uygulanmiyordu, genislik
-      // hala eski (ve ekranla tam eslesmeyen) width:100% degerinden
-      // geliyordu. Simdi ikisini de inline olarak SIFIRLIYORUZ ki
-      // left:0 + right:0 genisligi KENDI hesaplasin.
-      el.style.width = 'auto'
-      el.style.maxWidth = 'none'
-      // KRITIK: taban CSS sinifindaki "margin:-16px" (liste gorunumunun
-      // app-main dolgusunu iptal etmek icin kullandigi numara) bu SABIT
-      // konumlandirilmis pencereyle CATISIYORDU - negatif margin, left:0/
-      // right:0'i "ittirip" sagda bosluk birakiyor ve pencerenin ekranin
-      // tam altina kadar uzanmasini (dolayisiyla alt menuyu tam kapatmasini)
-      // engelliyordu. Margin'i SIFIRLIYORUZ - konumlandirmayi tamamen
-      // top/left/right/height yapsin.
-      el.style.margin = '0px'
-      el.style.zIndex = '200'
-      if (vv) {
-        el.style.top = `${vv.offsetTop}px`
-        el.style.height = `${vv.height}px`
-      } else {
-        // visualViewport desteklemeyen (cok eski) tarayicilarda yedek.
-        el.style.top = '0px'
-        el.style.height = `${window.innerHeight}px`
-      }
-    }
-    syncToVisibleViewport()
-    window.visualViewport?.addEventListener('resize', syncToVisibleViewport)
-    window.visualViewport?.addEventListener('scroll', syncToVisibleViewport)
-    window.addEventListener('orientationchange', syncToVisibleViewport)
-    return () => {
-      window.visualViewport?.removeEventListener('resize', syncToVisibleViewport)
-      window.visualViewport?.removeEventListener('scroll', syncToVisibleViewport)
-      window.removeEventListener('orientationchange', syncToVisibleViewport)
-    }
-  }, [])
+  useFixedViewport(shellRef) // tam ekran + klavye takibi (sadece konusma ekrani icin - liste normal akista kalip alt menuyu gizlemiyor)
 
   useEffect(() => {
     // requestAnimationFrame: tarayici yeni mesaji/yuksekligi tam

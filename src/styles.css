@@ -169,6 +169,15 @@ body {
   width: 100%;
   margin: 0 auto;
 }
+/* Mesajlar sekmesindeyken (icinde .messages-shell varsa) dolguyu tamamen
+   kaldiriyoruz - boylece .messages-shell'in "negatif margin ile dolguyu
+   delip gecme" numarasina hic gerek kalmiyor, bu da sagda ince bir
+   boslukla sonuclanan margin/width catismalarinin KOK SEBEBIYDI. Modern
+   tarayicilarin cogu :has()'i destekliyor; desteklemeyenlerde sadece
+   eski (ama artik daha az kritik olan) davranisa geri duser. */
+.app-main:has(.messages-shell) {
+  padding: 0;
+}
 
 .new-item-card {
   background: var(--card-bg);
@@ -1221,8 +1230,6 @@ input:-webkit-autofill:focus {
   flex-direction: column;
   height: 100%; /* app-main'in flex:1 ile ayirdigi ALANIN TAMAMI - liste gorunumu icin */
   width: 100%;
-  max-width: 100vw; /* konusma ekrani "fixed" oldugunda tasmayi kesin engelle */
-  margin: -16px;
   background: var(--paper);
   overflow: hidden;
   overflow-x: hidden; /* saga-sola kaymanin/tasmanin ana kilidi - kapsayicida */
