@@ -40,7 +40,10 @@ export default function AuthScreen() {
 
   // Basit bir e-posta format kontrolu - "Kod Gonder" butonunu ne zaman
   // aktif edecegimizi bilmek icin (asil dogrulama backend'de yapiliyor).
+  // .edu.tr sarti da burada erken uyarmak icin var - asil zorunlu kontrol
+  // backend'de.
   const emailLooksValid = /\S+@\S+\.\S+/.test(form.email)
+  const emailIsEduTr = form.email.toLowerCase().endsWith('.edu.tr')
 
   async function handleSendOtp() {
     if (!emailLooksValid || otpSending) return
@@ -108,22 +111,25 @@ export default function AuthScreen() {
           {mode === 'register' ? (
             <>
               <label>
-                E-posta
+                E-posta (.edu.tr uzantılı üniversite e-postası)
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => update('email', e.target.value)}
-                  placeholder="ornek@gmail.com"
+                  placeholder="ornek@ogr.universite.edu.tr"
                   required
                   disabled={otpSent}
                 />
               </label>
+              {form.email && emailLooksValid && !emailIsEduTr && !otpSent && (
+                <p className="form-error">Kayit sadece .edu.tr uzantili universite e-postalariyla yapilabilir.</p>
+              )}
 
               {!otpSent ? (
                 <button
                   type="button"
                   className="btn-secondary"
-                  disabled={!emailLooksValid || otpSending}
+                  disabled={!emailLooksValid || !emailIsEduTr || otpSending}
                   onClick={handleSendOtp}
                 >
                   {otpSending ? 'Gonderiliyor...' : 'Dogrulama Kodu Gonder'}
