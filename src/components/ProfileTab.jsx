@@ -93,7 +93,7 @@ export default function ProfileTab() {
 }
 
 function InfoSection({ profile, onSaved }) {
-  const [form, setForm] = useState({
+  const initialValues = {
     name: profile.name || '',
     university: profile.university || '',
     department: profile.department || '',
@@ -104,20 +104,26 @@ function InfoSection({ profile, onSaved }) {
     linkedin: profile.linkedin || '',
     discord: profile.discord || '',
     tags: profile.tags || '',
-  })
+  }
+  const [form, setForm] = useState(initialValues)
+  const [savedValues, setSavedValues] = useState(initialValues) // en son basariyla kaydedilen degerler
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState(false)
+
+  // Formda, en son kaydedilenden FARKLI (kaydedilmemis) bir sey var mi?
+  // Bunu net gostermek icin buton rengini/yazisini buna gore degistiriyoruz -
+  // aksi halde kullanici "kaydettim mi kaydetmedim mi" diye emin olamiyordu.
+  const isDirty = Object.keys(form).some((key) => form[key] !== savedValues[key])
 
   async function handleSave(e) {
     e.preventDefault()
+    if (!isDirty || saving) return
     setSaving(true)
     setError('')
-    setSaved(false)
     try {
       const updated = await api.profile.updateMe(form)
       onSaved(updated)
-      setSaved(true)
+      setSavedValues(form)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -211,9 +217,13 @@ function InfoSection({ profile, onSaved }) {
       </div>
 
       {error && <p className="form-error">{error}</p>}
-      {saved && <p className="card-note">Kaydedildi.</p>}
-      <button className="btn-primary" type="submit" disabled={saving} style={{ marginTop: 14 }}>
-        {saving ? 'Kaydediliyor...' : 'Kaydet'}
+      <button
+        className={isDirty ? 'btn-primary unsaved-changes-btn' : 'btn-secondary'}
+        type="submit"
+        disabled={saving || !isDirty}
+        style={{ marginTop: 14 }}
+      >
+        {saving ? 'Kaydediliyor...' : isDirty ? '● Kaydedilmemiş Değişiklikler - Kaydet' : '✓ Kaydedildi'}
       </button>
     </form>
   )

@@ -1473,3 +1473,19 @@ input:-webkit-autofill:focus {
     height: 100%; /* app-shell height:100dvh oldugu icin burada da ekstra hesaba gerek yok */
   }
 }
+
+/* --- Kaydedilmemis degisiklik gostergesi --- */
+.unsaved-changes-btn {
+  background: var(--accent-amber);
+  color: #1f1a10;
+  font-weight: 700;
+  animation: unsaved-pulse 1.6s ease-in-out infinite;
+}
+@keyframes unsaved-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(226, 163, 61, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(226, 163, 61, 0);
+  }
+}

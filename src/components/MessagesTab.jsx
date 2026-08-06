@@ -446,10 +446,10 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
             message={m}
             isMine={m.senderId === user.id}
             isSystemThread={isSystemThread}
-            showContextTag={i === data.messages.length - 1 && data.conversation.contextTitle}
-            contextLabel={CONTEXT_LABELS[data.conversation.contextType] || 'İlan'}
-            contextTitle={data.conversation.contextTitle}
-            onNavigateToContext={() => onNavigate?.(CONTEXT_TABS[data.conversation.contextType] || 'feed')}
+            showContextTag={!!m.msgContextTitle}
+            contextLabel={CONTEXT_LABELS[m.msgContextType] || 'İlan'}
+            contextTitle={m.msgContextTitle}
+            onNavigateToContext={() => onNavigate?.(CONTEXT_TABS[m.msgContextType] || 'feed')}
             onNavigate={onNavigate}
             onDelete={() => handleDelete(m.id)}
             onReply={() => setReplyTo({ id: m.id, body: m.body, senderName: m.sender?.name })}
