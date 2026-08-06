@@ -309,6 +309,24 @@ select:focus {
 .message-group.mine {
   align-items: flex-end;
 }
+/* Bildirim merkezi (sistem hesabi) mesajlari bir "sohbet" degil, bir
+   "bildirim akisi/log" gibi hissettirsin diye sag/sol yerine ORTALI
+   diziliyor - normal bir kisiyle konusmuyormussun hissi versin. */
+.message-group.system {
+  align-items: center;
+  width: 100%;
+}
+.message-group.system .message-bubble-row {
+  justify-content: center;
+}
+.message-group.system .message-bubble {
+  align-self: center;
+  max-width: 82%; /* karsi tarafta yanit/tepki ikonu olmadigi icin biraz daha genis olabilir */
+  text-align: center;
+}
+.message-group.system .message-bubble-meta {
+  justify-content: center; /* sil butonu olmadigi icin saat tek basina soldan degil ortadan gorunsun */
+}
 .context-tag-attached {
   margin-bottom: -1px; /* balonun ust kenariyla tam birlessin, arada bosluk kalmasin */
   border-radius: 10px 10px 0 0; /* alt kenar duz, tam balona oturuyor hissi versin */
@@ -488,8 +506,14 @@ select:focus {
      telefonlarda satirin toplam genisligini asip sagda tasmaya/
      bosluga sebep oluyordu. Ikonlara yetecek sabit bir pay (64px)
      ayirip GERI KALANI balona veriyoruz - boylece toplam satir HER
-     ZAMAN konteynerin icinde kaliyor. */
-  max-width: calc(100% - 64px);
+     ZAMAN konteynerin icinde kaliyor. AYRICA "min(...)" ile ustune
+     %74'luk bir tavan da koyduk - cok uzun (tek kelime, bosluksuz)
+     mesajlarda balon neredeyse TUM genisligi kaplayip hangi tarafa
+     yapisik oldugu belirsizlesiyordu (sagdaki/soldaki bosluk kalmayinca
+     "yapisik" hissi kayboluyordu). Artik en uzun mesajda bile karsi
+     tarafta en az %26'lik bir bosluk kalip hangi tarafa ait oldugu
+     net kaliyor. */
+  max-width: min(74%, calc(100% - 64px));
   /* KRITIK BUG DUZELTMESI: "aa" gibi cok kisa bir mesajda balon
      ICERIGE gore daraliyordu (min-width:0 sayesinde), ama saat bilgisi
      ("17:32") o dar genislige sigmayip alt alta bolunuyordu ("17:3" /
@@ -966,7 +990,13 @@ input:-webkit-autofill:focus {
 /* --- Mobil: alt navigasyon (bottom nav) --- */
 @media (max-width: 640px) {
   .app-shell {
-    padding-bottom: 60px; /* sabit alt bar icerigin ustunu kapatmasin */
+    /* KRITIK: 60px yeterli gelmiyordu - bazi telefonlarda (ozellikle
+       alttaki hareket cubugu/"home indicator" olan iPhone'larda) alt
+       barin GERCEK yuksekligi daha fazla oluyor, icerigin son kismi
+       (orn. Profilim sayfasindaki Kaydet/Hesap Dondur butonlari) barin
+       altinda gizli kaliyordu. Hem payi artirdik hem de telefonun
+       kendi guvenli alan (safe-area) bosluguna gore otomatik ekliyoruz. */
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
   .tab-bar {
     position: fixed;
@@ -977,6 +1007,7 @@ input:-webkit-autofill:focus {
     border-top: 1px solid var(--line);
     border-bottom: none;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0px); /* barin kendisi de guvenli alanin uzerine cikmasin */
     overflow-x: hidden; /* kaymasin - hepsi sigmali */
     padding: 4px 2px;
   }

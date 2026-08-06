@@ -458,7 +458,7 @@ function SecuritySection({ profile, onSaved, onLogout }) {
         </p>
       </div>
 
-      <div className="new-item-card">
+      <div className="new-item-card" style={{ marginBottom: 24 }}>
         <h2>Hesabi Dondur / Sil</h2>
         <p className="card-note">
           Hesabini dondurursan tekrar giris yapamazsin. Yeniden aktif etmek için yurt yoneticisiyle

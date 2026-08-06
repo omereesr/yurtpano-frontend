@@ -339,21 +339,52 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
 
   async function handleSend(e) {
     e.preventDefault()
-    if (!body.trim() || sending) return
+    const trimmedBody = body.trim()
+    if (!trimmedBody || sending) return
+
+    // Once ekrani ANINDA guncelle (sunucuyu beklemeden) - "hantal" hissi
+    // vermesin diye. Gecici bir id ile mesaji hemen listeye ekliyoruz,
+    // sunucudan gercek cevap gelince yerini gercek mesajla degistiriyoruz.
+    const tempId = `temp-${Date.now()}`
+    const optimisticMessage = {
+      id: tempId,
+      body: trimmedBody,
+      senderId: user.id,
+      sender: { id: user.id, name: user.name },
+      createdAt: new Date().toISOString(),
+      reactions: [],
+      replyToId: replyTo?.id || null,
+      replyToBody: replyTo?.body || null,
+      replyToSenderName: replyTo?.senderName || null,
+      msgContextType: null,
+      msgContextId: null,
+      msgContextTitle: null,
+      _sending: true,
+    }
+
+    setData((prev) => (prev ? { ...prev, messages: [...prev.messages, optimisticMessage] } : prev))
+    setBody('')
+    setReplyTo(null)
     setSending(true)
     setError('')
+    // Mobil tarayicilarda "Gonder" butonuna dokunmak, textarea'nin
+    // odagini (focus) kaybettirip klavyeyi kapatabiliyor - WhatsApp'ta
+    // oldugu gibi klavye acik kalsin diye gonderirken odagi koruyoruz.
+    textareaRef.current?.focus()
+
     try {
-      const message = await api.messages.send(conversationId, body.trim(), replyTo?.id)
-      setBody('')
-      setReplyTo(null)
-      setData((prev) => (prev ? { ...prev, messages: [...prev.messages, message] } : prev))
+      const message = await api.messages.send(conversationId, trimmedBody, replyTo?.id)
+      // Gecici mesaji GERCEK mesajla degistiriyoruz (dogru id, reactions vb icin).
+      setData((prev) =>
+        prev ? { ...prev, messages: prev.messages.map((m) => (m.id === tempId ? message : m)) } : prev
+      )
       onChanged()
-      // Mobil tarayicilarda "Gonder" butonuna dokunmak, textarea'nin
-      // odagini (focus) kaybettirip klavyeyi kapatabiliyor - WhatsApp'ta
-      // oldugu gibi klavye acik kalsin diye gonderdikten hemen sonra
-      // textarea'ya odagi GERI VERIYORUZ.
-      textareaRef.current?.focus()
     } catch (err) {
+      // Basarisiz oldu: gecici mesaji kaldir, yazdigini geri koy, hatayi goster.
+      setData((prev) =>
+        prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== tempId) } : prev
+      )
+      setBody(trimmedBody)
       setError(err.message)
     } finally {
       setSending(false)
@@ -553,7 +584,11 @@ function MessageBubble({
 
   return (
     <div className="message-group-wrap" data-message-id={m.id}>
-      <div className={isMine ? 'message-group mine' : 'message-group'}>
+      <div
+        className={
+          isSystemThread ? 'message-group system' : isMine ? 'message-group mine' : 'message-group'
+        }
+      >
         {showContextTag && (
           <button
             type="button"
@@ -570,7 +605,7 @@ function MessageBubble({
               ↩
             </button>
           )}
-          <div className={isMine ? 'message-bubble mine' : 'message-bubble'}>
+          <div className={isMine ? 'message-bubble mine' : 'message-bubble'} style={m._sending ? { opacity: 0.6 } : undefined}>
             {m.replyToId && (
               <button type="button" className="message-quote" onClick={onQuoteClick}>
                 <strong>{m.replyToSenderName}</strong>
@@ -594,8 +629,8 @@ function MessageBubble({
             )}
 
             <div className="message-bubble-meta">
-              <span className="message-bubble-time">{formatClock(m.createdAt)}</span>
-              {isMine && (
+              <span className="message-bubble-time">{m._sending ? 'Gönderiliyor...' : formatClock(m.createdAt)}</span>
+              {isMine && !m._sending && (
                 <button className="message-bubble-delete" onClick={onDelete}>
                   Sil
                 </button>
