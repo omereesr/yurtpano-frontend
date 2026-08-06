@@ -490,13 +490,29 @@ select:focus {
      ayirip GERI KALANI balona veriyoruz - boylece toplam satir HER
      ZAMAN konteynerin icinde kaliyor. */
   max-width: calc(100% - 64px);
-  min-width: 0; /* flex icinde icerigin tasmasini engellemek icin sart */
-  overflow-wrap: break-word; /* uzun/bosluksuz kelimeler balonu yatay genisletmesin */
-  word-break: break-word;
+  /* KRITIK BUG DUZELTMESI: "aa" gibi cok kisa bir mesajda balon
+     ICERIGE gore daraliyordu (min-width:0 sayesinde), ama saat bilgisi
+     ("17:32") o dar genislige sigmayip alt alta bolunuyordu ("17:3" /
+     "2" gibi). Balona, saat+sil satirinin rahat sigacagi bir minimum
+     genislik veriyoruz. */
+  min-width: 88px;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 .message-bubble p {
   margin: 0;
   font-size: 0.88rem;
+  /* Uzun/bosluksuz kelimeler (link vb.) SADECE burada, gercek mesaj
+     metninde kirilsin - saat/sil gibi kisa etiketlere bu davranisi
+     bulastirmiyoruz. */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.message-bubble-time {
+  white-space: nowrap; /* "17:32" hicbir zaman bolunmesin */
+}
+.message-bubble-delete {
+  white-space: nowrap;
 }
 .message-bubble.mine {
   align-self: flex-end;
