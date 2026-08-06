@@ -600,7 +600,23 @@ function MessageBubble({
         )}
 
         <div className="message-bubble-row">
-          {!isMine && !isSystemThread && (
+          {/* KRITIK DUZELTME: ikonlar balon ile EKRAN KENARI arasina
+              girmesin (bu, balonu kenardan uzaklastirip gereksiz bir
+              bosluk yaratiyordu) - bunun yerine balonun DIGER (bos kalan)
+              tarafina koyuyoruz. Karsi taraf mesajlarinda (sola yapisik)
+              ikonlar balonun SAGINDA, kendi mesajlarimizda (saga yapisik)
+              ikonlar balonun SOLUNDA duruyor artik. */}
+          {isMine && !isSystemThread && (
+            <button
+              type="button"
+              className="message-hover-btn react-btn"
+              onClick={() => setShowPicker((s) => !s)}
+              title="Tepki ver"
+            >
+              🙂
+            </button>
+          )}
+          {isMine && !isSystemThread && (
             <button type="button" className="message-hover-btn reply-btn" onClick={onReply} title="Yanıtla">
               ↩
             </button>
@@ -638,12 +654,12 @@ function MessageBubble({
             </div>
             {showReadReceipt && <span className="read-receipt">Görüldü ✓✓</span>}
           </div>
-          {isMine && !isSystemThread && (
+          {!isMine && !isSystemThread && (
             <button type="button" className="message-hover-btn reply-btn" onClick={onReply} title="Yanıtla">
               ↩
             </button>
           )}
-          {!isSystemThread && (
+          {!isMine && !isSystemThread && (
             <button
               type="button"
               className="message-hover-btn react-btn"
