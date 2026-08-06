@@ -33,6 +33,15 @@ function Shell() {
   // 'rides'/'listings' gibi kategori isimleriyle gelir - bunlari otomatik
   // olarak Ilanlar sekmesine + dogru kategoriye yonlendiriyoruz.
   function handleNavigate(target) {
+    // GUVENLIK AGI: mesaj yazarken alt navigasyon barini gizlemek icin
+    // eklenen "composing" isareti, bazi senaryolarda (orn. klavyeyi acik
+    // tutmak icin butonun odagi CALMASINI ENGELLEDIGIMIZ icin blur olayi
+    // hic tetiklenmeyebiliyordu) temizlenmeden "yapiskan" kalabiliyordu -
+    // bu da alt barin baska sayfalarda da gizli/bozuk kalmasina sebep
+    // oluyordu. Hangi sekmeye gecilirse gecilsin, burada HER ZAMAN
+    // zorla temizliyoruz.
+    document.body.classList.remove('composing')
+
     if (LISTING_KINDS.includes(target)) {
       setListingsCategory(target)
       setActive('ilanlar')
