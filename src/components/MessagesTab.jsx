@@ -446,7 +446,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
             message={m}
             isMine={m.senderId === user.id}
             isSystemThread={isSystemThread}
-            showContextTag={i === 0 && data.conversation.contextTitle}
+            showContextTag={i === data.messages.length - 1 && data.conversation.contextTitle}
             contextLabel={CONTEXT_LABELS[data.conversation.contextType] || 'İlan'}
             contextTitle={data.conversation.contextTitle}
             onNavigateToContext={() => onNavigate?.(CONTEXT_TABS[data.conversation.contextType] || 'feed')}
@@ -464,11 +464,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
 
       {otherTyping && <p className="typing-indicator">{otherUser?.name} yazıyor...</p>}
 
-      {isSystemThread ? (
-        <p className="card-note" style={{ padding: '0 14px 14px' }}>
-          🔔 Bu, otomatik bildirimlerin geldiği bir bildirim merkezi - buraya mesaj yazamazsın.
-        </p>
-      ) : isPendingForMe ? (
+      {isSystemThread ? null : isPendingForMe ? (
         <RequestActions
           conversationId={conversationId}
           onDone={() => {
@@ -503,7 +499,21 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
               onBlur={handleComposerBlur}
               rows={1}
             />
-            <button className="btn-primary composer-send" type="submit" disabled={sending || !body.trim()}>
+            <button
+              className="btn-primary composer-send"
+              type="submit"
+              disabled={sending || !body.trim()}
+              // KRITIK: mousedown'da preventDefault() cagirmak, butonun
+              // ODAGI (focus) ALMASINI engeller - boylece textarea hic
+              // blur olmaz, klavye ASLA kapanmaz. Onceki "gonderdikten
+              // SONRA tekrar focus ver" yaklasimi mobilde islemiyordu cunku
+              // bir "await" sonrasi yapilan .focus() cagrisi, tarayicinin
+              // "guvenilir kullanici jesti" zincirinin disinda kaliyor ve
+              // cogu mobil tarayici klavyeyi tekrar acmiyor. (touchstart'ta
+              // preventDefault YAPMIYORUZ - bazi tarayicilarda butonun
+              // click/submit olayini tetiklemesini engelleyebiliyor.)
+              onMouseDown={(e) => e.preventDefault()}
+            >
               {sending ? '...' : 'Gönder'}
             </button>
           </div>

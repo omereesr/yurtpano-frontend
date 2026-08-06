@@ -16,11 +16,20 @@ function monthsSince(dateStr) {
 }
 
 export default function ProfileTab() {
-  const { logout } = useAuth()
+  const { logout, updateUser } = useAuth()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [section, setSection] = useState('bilgiler')
+
+  // Profil kaydedildiginde hem bu sayfanin kendi state'ini, hem de ust
+  // bardaki avatar/isim gibi yerlerin dayandigi GLOBAL oturum bilgisini
+  // (AuthContext) guncelliyoruz - aksi halde isim degisikligi sadece bu
+  // sayfada gorunup ust barda eski isim kalmaya devam ediyordu.
+  function handleProfileUpdate(updated) {
+    setProfile(updated)
+    updateUser({ name: updated.name, roomNo: updated.roomNo })
+  }
 
   async function load() {
     setLoading(true)
@@ -77,7 +86,7 @@ export default function ProfileTab() {
         </button>
       </div>
 
-      {section === 'bilgiler' && <InfoSection profile={profile} onSaved={setProfile} />}
+      {section === 'bilgiler' && <InfoSection profile={profile} onSaved={handleProfileUpdate} />}
       {section === 'güvenlik' && <SecuritySection profile={profile} onSaved={setProfile} onLogout={logout} />}
     </div>
   )

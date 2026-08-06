@@ -44,8 +44,22 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  // Profil bilgilerinden (isim, oda no vb.) biri degisince, ust bardaki
+  // avatar/isim gibi yerlerin de ANINDA guncellenmesi icin - onceden
+  // sadece login/register'da user state'i set ediliyordu, profil
+  // guncellemesi sadece ProfileTab'in kendi YEREL state'ini
+  // guncelliyordu, ust bar eski ismi gostermeye devam ediyordu.
+  const updateUser = useCallback((partial) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...partial }
+      localStorage.setItem('yurtpano_user', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

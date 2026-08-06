@@ -235,7 +235,7 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
           <input
             placeholder="Kac kisi ariyorsun? (orn. 3)"
             type="number"
-            min="2"
+            min="1"
             max="30"
             value={form.capacity}
             onChange={(e) => setForm({ ...form, capacity: e.target.value })}
@@ -371,10 +371,14 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                     <>
                       <button
                         className="btn-secondary"
-                        disabled={isBusy(o.id, 'join')}
+                        disabled={isBusy(o.id, 'join') || o.myPendingRequest}
                         onClick={() => handleJoin(o.id)}
                       >
-                        {isBusy(o.id, 'join') ? 'Katılıyor...' : 'Katıl'}
+                        {isBusy(o.id, 'join')
+                          ? 'Katılıyor...'
+                          : o.myPendingRequest
+                            ? '⏳ Onay Bekleniyor'
+                            : 'Katıl'}
                       </button>
                       <MessageButton
                         toUserId={o.ownerId}

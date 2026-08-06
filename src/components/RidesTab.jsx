@@ -232,7 +232,7 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
           />
           <input
             type="number"
-            min="2"
+            min="1"
             max="8"
             value={form.seatsTotal}
             onChange={(e) => setForm({ ...form, seatsTotal: e.target.value })}
@@ -356,10 +356,14 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                     <>
                       <button
                         className="btn-secondary"
-                        disabled={r.seatsTaken >= r.seatsTotal || isBusy(r.id, 'join')}
+                        disabled={r.seatsTaken >= r.seatsTotal || isBusy(r.id, 'join') || r.myPendingRequest}
                         onClick={() => handleJoin(r.id)}
                       >
-                        {isBusy(r.id, 'join') ? 'Kapiliyor...' : 'Koltuk Kap'}
+                        {isBusy(r.id, 'join')
+                          ? 'Kapılıyor...'
+                          : r.myPendingRequest
+                            ? '⏳ Onay Bekleniyor'
+                            : 'Koltuk Kap'}
                       </button>
                       <MessageButton
                         toUserId={r.ownerId}
