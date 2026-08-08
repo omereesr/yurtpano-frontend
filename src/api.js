@@ -122,6 +122,8 @@ export const api = {
       request('/profile/join-approval', { method: 'PUT', body: { requireJoinApproval } }),
     deactivate: (currentPassword) =>
       request('/profile/deactivate', { method: 'POST', body: { currentPassword } }),
+    deleteAccount: (currentPassword) =>
+      request('/profile/delete-account', { method: 'POST', body: { currentPassword } }),
     rate: (userId, score, comment) =>
       request(`/profile/${userId}/rate`, { method: 'POST', body: { score, comment } }),
   },

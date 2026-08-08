@@ -274,6 +274,32 @@ function SecuritySection({ profile, onSaved, onLogout }) {
   const [deactivating, setDeactivating] = useState(false)
   const [confirmingDeactivate, setConfirmingDeactivate] = useState(false)
 
+  // Gercek (kalici) hesap silme - dondurmadan TAMAMEN farkli, geri
+  // donusu yok. Google Play politikasi geregi eklendi.
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteErr, setDeleteErr] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
+  async function handleDeleteAccount(e) {
+    e.preventDefault()
+    if (deleteConfirmText.trim().toUpperCase() !== 'SİL') {
+      setDeleteErr('Onaylamak için kutuya büyük harflerle "SİL" yazmalısın.')
+      return
+    }
+    setDeleting(true)
+    setDeleteErr('')
+    try {
+      await api.profile.deleteAccount(deletePassword)
+      onLogout()
+    } catch (err) {
+      setDeleteErr(err.message)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   async function handlePasswordChange(e) {
     e.preventDefault()
     setPasswordSaving(true)
@@ -431,6 +457,13 @@ function SecuritySection({ profile, onSaved, onLogout }) {
           </button>
         </div>
         {pushError && <p className="form-error">{pushError}</p>}
+        <p className="muted" style={{ marginTop: 10, fontSize: '0.78rem' }}>
+          📱 <strong>Xiaomi/Huawei/Honor/Oppo telefon kullananlar dikkat:</strong> bu telefonlar pil
+          tasarrufu için tarayıcıyı arka planda otomatik kapatıyor, bu da bildirimleri engelliyor.
+          Düzeltmek için: <strong>Ayarlar → Uygulamalar → (tarayıcın) → Otomatik Başlatma'yı aç</strong> ve{' '}
+          <strong>Pil → Kısıtlama Yok</strong> seç. iPhone kullananlar için: siteyi{' '}
+          <strong>Paylaş → Ana Ekrana Ekle</strong> ile yüklemen gerekiyor.
+        </p>
       </div>
 
       <div className="new-item-card">
@@ -485,6 +518,51 @@ function SecuritySection({ profile, onSaved, onLogout }) {
               </button>
               <button className="btn-link" type="button" onClick={() => setConfirmingDeactivate(false)}>
                 Vazgec
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      <div className="new-item-card" style={{ marginBottom: 24, borderColor: 'var(--accent-urgent)' }}>
+        <h2 style={{ color: 'var(--accent-urgent)' }}>⚠️ Hesabımı Kalıcı Olarak Sil</h2>
+        <p className="card-note">
+          Bu, <strong>"Dondur"dan farklı</strong> — geri dönüşü yok. İsmin, telefonun, e-postan ve
+          profil bilgilerin kalıcı olarak silinir/anonimleştirilir, bir daha bu hesapla giriş
+          yapamazsın. Açık ilanların iptal edilir. (Başkalarıyla olan mesaj geçmişin, o kişilerin
+          kendi ekranında "Silinmiş Kullanıcı" olarak kalmaya devam eder — onların geçmişini
+          bozmamak için tamamen silinmez.)
+        </p>
+        {!confirmingDelete ? (
+          <button className="btn-secondary" onClick={() => setConfirmingDelete(true)}>
+            Hesabımı Kalıcı Olarak Sil
+          </button>
+        ) : (
+          <form onSubmit={handleDeleteAccount} className="inline-form">
+            <input
+              type="password"
+              placeholder="Şifren (onay için)"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              required
+              minLength={6}
+            />
+            <label>
+              Onaylamak için kutuya büyük harflerle <strong>SİL</strong> yaz
+              <input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="SİL"
+                required
+              />
+            </label>
+            {deleteErr && <p className="form-error">{deleteErr}</p>}
+            <div className="card-actions" style={{ marginTop: 0 }}>
+              <button className="btn-primary" type="submit" disabled={deleting} style={{ background: 'var(--accent-urgent)' }}>
+                {deleting ? 'Siliniyor...' : 'Evet, Kalıcı Olarak Sil'}
+              </button>
+              <button className="btn-link" type="button" onClick={() => setConfirmingDelete(false)}>
+                Vazgeç
               </button>
             </div>
           </form>
