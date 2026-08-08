@@ -142,6 +142,13 @@ export const api = {
     getUnreadCount: () => request('/messages/unread-count'),
   },
 
+  groups: {
+    getGroups: () => request('/groups'),
+    getByListing: (listingType, listingId) => request(`/groups/by-listing/${listingType}/${listingId}`),
+    getMessages: (groupId) => request(`/groups/${groupId}/messages`),
+    send: (groupId, body) => request(`/groups/${groupId}/messages`, { method: 'POST', body: { body } }),
+  },
+
   reports: {
     create: (payload) => request('/reports', { method: 'POST', body: payload }),
   },

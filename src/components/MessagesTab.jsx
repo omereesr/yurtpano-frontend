@@ -7,6 +7,7 @@ import Avatar from './Avatar'
 import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
 import { formatClock } from '../utils/time'
+import useFixedViewport from '../hooks/useFixedViewport'
 
 const CONTEXT_LABELS = {
   listing: 'İkinci El İlanı',
@@ -17,47 +18,8 @@ const CONTEXT_LABELS = {
 const CONTEXT_TABS = { listing: 'listings', request: 'requests', order: 'orders', ride: 'rides' }
 const QUICK_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
 
-// Konusma ekranini (bir sohbetin icini) cihazin GORUNUR alanina tam
-// oturtan hook - klavye acildiginda/kapandiginda otomatik guncellenir.
-// SADECE konusma ekraninda kullaniliyor (liste ekrani normal sayfa
-// akisinda kalip alt navigasyon menusunu gizlemiyor - kullanici mesaj
-// listesindeyken diger sekmelere gecebilmeli).
-function useFixedViewport(ref) {
-  useEffect(() => {
-    function sync() {
-      if (!ref.current) return
-      const vv = window.visualViewport
-      const el = ref.current
-      el.style.position = 'fixed'
-      el.style.left = '0px'
-      el.style.right = '0px'
-      // width/max-width'i INLINE olarak sifirliyoruz - CSS sinifinda
-      // kalintı "width:100%" gibi bir deger olsa bile (position:fixed'te
-      // left+right+width ayni anda olunca "right" yok sayilir kuralindan
-      // dolayi) artik hicbir sekilde etkili olamaz.
-      el.style.width = 'auto'
-      el.style.maxWidth = 'none'
-      el.style.margin = '0px'
-      el.style.zIndex = '200'
-      if (vv) {
-        el.style.top = `${vv.offsetTop}px`
-        el.style.height = `${vv.height}px`
-      } else {
-        el.style.top = '0px'
-        el.style.height = `${window.innerHeight}px`
-      }
-    }
-    sync()
-    window.visualViewport?.addEventListener('resize', sync)
-    window.visualViewport?.addEventListener('scroll', sync)
-    window.addEventListener('orientationchange', sync)
-    return () => {
-      window.visualViewport?.removeEventListener('resize', sync)
-      window.visualViewport?.removeEventListener('scroll', sync)
-      window.removeEventListener('orientationchange', sync)
-    }
-  }, [ref])
-}
+// useFixedViewport artik src/hooks/useFixedViewport.js dosyasinda -
+// GroupChatView ile de ortak kullanabilmek icin oraya tasindi.
 
 // Butun sekme artik tam yukseklikte, WhatsApp benzeri bir "kabuk" -
 // normal sayfa dolgusunu/kaydirmasini iptal edip kendi ic kaydirmasini

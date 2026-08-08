@@ -10,6 +10,7 @@ import Avatar from './Avatar'
 import VerifiedBadge from './VerifiedBadge'
 import ReportButton from './ReportButton'
 import ParticipantsCard from './ParticipantsCard'
+import GroupChatView from './GroupChatView'
 import EmptyState from './EmptyState'
 import SkeletonList from './SkeletonList'
 import { timeAgo, timeUntil } from '../utils/time'
@@ -24,6 +25,16 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
   const [form, setForm] = useState({ restaurant: '', capacity: '', minAmount: '', note: '' })
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState({})
+  const [openGroupId, setOpenGroupId] = useState(null)
+
+  async function openGroupChat(orderId) {
+    try {
+      const group = await api.groups.getByListing('order', orderId)
+      setOpenGroupId(group.id)
+    } catch (err) {
+      toast(err.message, 'error')
+    }
+  }
 
   function isBusy(id, action) {
     return busy[`${id}:${action}`] === true
@@ -221,6 +232,10 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
     }
   }
 
+  if (openGroupId) {
+    return <GroupChatView groupId={openGroupId} onBack={() => setOpenGroupId(null)} />
+  }
+
   if (mode === 'create') {
     return (
       <section className="new-item-card">
@@ -349,6 +364,17 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                   contextId={o.id}
                   contextTitle={o.restaurant}
                 />
+
+                {(o.ownerId === user.id || alreadyJoined) && (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ marginTop: 8 }}
+                    onClick={() => openGroupChat(o.id)}
+                  >
+                    👥 Grup Sohbeti
+                  </button>
+                )}
 
                 <div className="card-actions">
                   {o.ownerId === user.id ? (
