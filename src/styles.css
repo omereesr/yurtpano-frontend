@@ -987,8 +987,14 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* --- Mobil: alt navigasyon (bottom nav) --- */
-@media (max-width: 640px) {
+/* --- Mobil: alt navigasyon (bottom nav) ---
+   NOT: Bu medya sorgusu artik SADECE dar (dik/portre) telefonlari degil,
+   YATAY (landscape) cevrilmis telefonlari da yakaliyor - yatay telefonda
+   genislik 640px'i asabiliyor ama YUKSEKLIK hala kucuk kaliyor (~400-500px),
+   bu yuzden max-height + orientation:landscape kosulunu da ekledik. Aksi
+   halde telefon yatay tutulunca alt menu sabit (fixed) olmaktan cikip
+   masaustu gibi davraniyordu. --- */
+@media (max-width: 640px), (max-height: 500px) and (orientation: landscape) {
   .app-shell {
     /* KRITIK: 60px yeterli gelmiyordu - bazi telefonlarda (ozellikle
        alttaki hareket cubugu/"home indicator" olan iPhone'larda) alt
@@ -1502,7 +1508,7 @@ input:-webkit-autofill:focus {
   cursor: pointer;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (max-height: 500px) and (orientation: landscape) {
   .messages-shell {
     height: 100%; /* app-shell height:100dvh oldugu icin burada da ekstra hesaba gerek yok */
   }

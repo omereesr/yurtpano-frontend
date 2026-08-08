@@ -26,6 +26,10 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState({})
   const [openGroupId, setOpenGroupId] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState('')
 
   async function openGroupChat(orderId) {
     try {
@@ -33,6 +37,38 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
       setOpenGroupId(group.id)
     } catch (err) {
       toast(err.message, 'error')
+    }
+  }
+
+  function startEdit(o) {
+    setEditingId(o.id)
+    setEditError('')
+    setEditForm({
+      restaurant: o.restaurant,
+      capacity: o.capacity,
+      minAmount: o.minAmount || '',
+      note: o.note || '',
+    })
+  }
+
+  async function handleEditSave(orderId) {
+    setEditSaving(true)
+    setEditError('')
+    try {
+      const payload = {
+        restaurant: editForm.restaurant,
+        capacity: Number(editForm.capacity),
+        minAmount: editForm.minAmount ? Number(editForm.minAmount) : null,
+        note: editForm.note || null,
+      }
+      await api.updateOrder(orderId, payload)
+      toast('İlan güncellendi.')
+      setEditingId(null)
+      await load(true)
+    } catch (err) {
+      setEditError(err.message)
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -319,13 +355,63 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
                   </span>
                   <div className="card-tag">Ortak Siparis</div>
                 </div>
-                <h3>{o.restaurant}</h3>
-                <p className="card-meta">
-                  {timeAgo(o.createdAt)}
-                  {timeUntil(o.expiresAt) ? ` - ⏳ ${timeUntil(o.expiresAt)}` : ''}
-                </p>
-                {o.minAmount && <p className="card-note">Min. sepet: {o.minAmount} TL</p>}
-                {o.note && <p className="card-note">{o.note}</p>}
+                {editingId === o.id ? (
+                  <div className="inline-form" style={{ marginTop: 8 }}>
+                    <input
+                      value={editForm.restaurant}
+                      onChange={(e) => setEditForm({ ...editForm, restaurant: e.target.value })}
+                      placeholder="Restoran"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={editForm.capacity}
+                      onChange={(e) => setEditForm({ ...editForm, capacity: e.target.value })}
+                      placeholder="Kaç kişi"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      value={editForm.minAmount}
+                      onChange={(e) => setEditForm({ ...editForm, minAmount: e.target.value })}
+                      placeholder="Min. sepet (opsiyonel)"
+                    />
+                    <input
+                      value={editForm.note}
+                      onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
+                      placeholder="Not (opsiyonel)"
+                    />
+                    {editError && <p className="form-error">{editError}</p>}
+                    <div className="card-actions">
+                      <button
+                        className="btn-primary"
+                        disabled={editSaving}
+                        onClick={() => handleEditSave(o.id)}
+                      >
+                        {editSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                      </button>
+                      <button className="btn-secondary" disabled={editSaving} onClick={() => setEditingId(null)}>
+                        Vazgeç
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3>{o.restaurant}</h3>
+                    <p className="card-meta">
+                      {timeAgo(o.createdAt)}
+                      {timeUntil(o.expiresAt) ? ` - ⏳ ${timeUntil(o.expiresAt)}` : ''}
+                    </p>
+                    {o.minAmount && <p className="card-note">Min. sepet: {o.minAmount} TL</p>}
+                    {o.note && <p className="card-note">{o.note}</p>}
+                    {o.ownerId === user.id && (
+                      <button type="button" className="btn-link" onClick={() => startEdit(o)}>
+                        ✏️ Düzenle
+                      </button>
+                    )}
+                  </>
+                )}
                 <CapacityBar joined={o.joinedCount} capacity={o.capacity} />
 
                 {o.ownerId === user.id && o.pendingParticipants?.length > 0 && (

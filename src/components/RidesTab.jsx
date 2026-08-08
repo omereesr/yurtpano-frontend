@@ -25,6 +25,10 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState({})
   const [openGroupId, setOpenGroupId] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState('')
 
   async function openGroupChat(rideId) {
     try {
@@ -32,6 +36,41 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
       setOpenGroupId(group.id)
     } catch (err) {
       toast(err.message, 'error')
+    }
+  }
+
+  function startEdit(r) {
+    setEditingId(r.id)
+    setEditError('')
+    // datetime-local input "YYYY-MM-DDTHH:mm" formati bekliyor - ISO'dan
+    // saniye/zaman dilimi kismini kirpip donusturuyoruz.
+    const localDateTime = new Date(r.departureAt).toISOString().slice(0, 16)
+    setEditForm({
+      destination: r.destination,
+      departureAt: localDateTime,
+      seatsTotal: r.seatsTotal,
+      note: r.note || '',
+    })
+  }
+
+  async function handleEditSave(rideId) {
+    setEditSaving(true)
+    setEditError('')
+    try {
+      const payload = {
+        destination: editForm.destination,
+        departureAt: new Date(editForm.departureAt).toISOString(),
+        seatsTotal: Number(editForm.seatsTotal),
+        note: editForm.note || null,
+      }
+      await api.updateRide(rideId, payload)
+      toast('İlan güncellendi.')
+      setEditingId(null)
+      await load(true)
+    } catch (err) {
+      setEditError(err.message)
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -307,11 +346,59 @@ export default function RidesTab({ mode = 'browse', onPosted }) {
                   </span>
                   <div className="card-tag">Yolculuk</div>
                 </div>
-                <h3>{r.destination}</h3>
-                <p className="card-meta">
-                  {new Date(r.departureAt).toLocaleString('tr-TR')} - {timeAgo(r.createdAt)} paylasildi
-                </p>
-                {r.note && <p className="card-note">{r.note}</p>}
+                {editingId === r.id ? (
+                  <div className="inline-form" style={{ marginTop: 8 }}>
+                    <input
+                      value={editForm.destination}
+                      onChange={(e) => setEditForm({ ...editForm, destination: e.target.value })}
+                      placeholder="Nereye"
+                    />
+                    <input
+                      type="datetime-local"
+                      value={editForm.departureAt}
+                      onChange={(e) => setEditForm({ ...editForm, departureAt: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      max="8"
+                      value={editForm.seatsTotal}
+                      onChange={(e) => setEditForm({ ...editForm, seatsTotal: e.target.value })}
+                      placeholder="Koltuk sayısı"
+                    />
+                    <input
+                      value={editForm.note}
+                      onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
+                      placeholder="Not (opsiyonel)"
+                    />
+                    {editError && <p className="form-error">{editError}</p>}
+                    <div className="card-actions">
+                      <button
+                        className="btn-primary"
+                        disabled={editSaving}
+                        onClick={() => handleEditSave(r.id)}
+                      >
+                        {editSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                      </button>
+                      <button className="btn-secondary" disabled={editSaving} onClick={() => setEditingId(null)}>
+                        Vazgeç
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3>{r.destination}</h3>
+                    <p className="card-meta">
+                      {new Date(r.departureAt).toLocaleString('tr-TR')} - {timeAgo(r.createdAt)} paylasildi
+                    </p>
+                    {r.note && <p className="card-note">{r.note}</p>}
+                    {r.ownerId === user.id && (
+                      <button type="button" className="btn-link" onClick={() => startEdit(r)}>
+                        ✏️ Düzenle
+                      </button>
+                    )}
+                  </>
+                )}
                 <p className="card-meta">
                   Koltuk: {r.seatsTaken}/{r.seatsTotal}
                 </p>
