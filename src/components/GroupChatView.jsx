@@ -43,7 +43,17 @@ export default function GroupChatView({ groupId, onBack }) {
       window.dispatchEvent(new Event('yurtpano:messages-read'))
     }
     socket.on('groupMessage:new', handleNew)
-    return () => socket.off('groupMessage:new', handleNew)
+    function handleDeleted(payload) {
+      if (payload.groupId !== groupId) return
+      setData((prev) =>
+        prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== payload.messageId) } : prev
+      )
+    }
+    socket.on('groupMessage:deleted', handleDeleted)
+    return () => {
+      socket.off('groupMessage:new', handleNew)
+      socket.off('groupMessage:deleted', handleDeleted)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId])
 
@@ -95,6 +105,15 @@ export default function GroupChatView({ groupId, onBack }) {
       setError(err.message)
     } finally {
       setSending(false)
+    }
+  }
+
+  async function handleDeleteMessage(messageId) {
+    try {
+      await api.groups.deleteMessage(groupId, messageId)
+      setData((prev) => (prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== messageId) } : prev))
+    } catch (err) {
+      setError(err.message)
     }
   }
 
@@ -156,6 +175,11 @@ export default function GroupChatView({ groupId, onBack }) {
                   <span className="message-bubble-time">
                     {m._sending ? 'Gönderiliyor...' : formatClock(m.createdAt)}
                   </span>
+                  {isMine && !m._sending && (
+                    <button className="message-bubble-delete" onClick={() => handleDeleteMessage(m.id)}>
+                      Sil
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -1144,8 +1144,11 @@ input:-webkit-autofill:focus {
 
 /* --- Gorundu etiketi --- */
 .read-receipt {
-  font-size: 0.65rem;
-  color: var(--accent-teal);
+  font-size: 0.7rem;
+  color: var(--ink-soft); /* gonderildi ama henuz gorulmedi - soluk */
+}
+.read-receipt-seen {
+  color: var(--accent-teal); /* gorüldu - renkli, WhatsApp'taki mavi tik mantigi */
 }
 
 /* --- Puanlama (yildizlar) --- */

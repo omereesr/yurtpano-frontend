@@ -58,6 +58,22 @@ export default function MessagesTab({ onNavigate }) {
     }
   }
 
+  // Konusmayi SADECE kendi listenden kaldirir - karsi taraf hala goruyor,
+  // o yeni mesaj atarsa senin icin otomatik tekrar belirir.
+  async function handleHideConversation(conversationId) {
+    if (!window.confirm('Bu sohbeti listenden kaldırmak istediğine emin misin? Karşı taraf yeni mesaj atarsa tekrar görünecek.')) {
+      return
+    }
+    // Once ekrandan kaldir (optimistic), sonra sunucuya bildir.
+    setAll((prev) => prev.filter((c) => c.id !== conversationId))
+    try {
+      await api.messages.hide(conversationId)
+    } catch (err) {
+      setError(err.message)
+      load() // basarisiz olduysa gercek listeyle senkronize et
+    }
+  }
+
   useEffect(() => {
     load()
     const socket = getSocket()
@@ -224,6 +240,19 @@ export default function MessagesTab({ onNavigate }) {
                   </p>
                 )}
                 {view === 'istekler' && <RequestActions conversationId={c.id} onDone={load} />}
+                {view === 'sohbetler' && (
+                  <button
+                    type="button"
+                    className="btn-link participant-remove"
+                    style={{ marginTop: 4 }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleHideConversation(c.id)
+                    }}
+                  >
+                    🗑️ Kaldır
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -494,8 +523,6 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
   const otherUser = data.conversation.otherUser
   const isSystemThread = !!otherUser?.isSystem
   const isPendingForMe = data.conversation.status === 'pending' && data.conversation.initiatorId !== user.id
-  const myMessages = data.messages.filter((m) => m.senderId === user.id)
-  const lastMineId = myMessages.length > 0 ? myMessages[myMessages.length - 1].id : null
 
   return (
     <div className="messages-shell" ref={shellRef}>
@@ -529,7 +556,7 @@ function ConversationThread({ conversationId, onBack, onChanged, onNavigate }) {
             onReact={(emoji) => handleReact(m.id, emoji)}
             onQuoteClick={() => m.replyToId && scrollToMessage(m.replyToId)}
             showReadReceipt={
-              m.id === lastMineId && otherLastReadAt && new Date(m.createdAt) <= new Date(otherLastReadAt)
+              !!(otherLastReadAt && new Date(m.createdAt) <= new Date(otherLastReadAt))
             }
           />
         ))}
@@ -688,13 +715,20 @@ function MessageBubble({
 
             <div className="message-bubble-meta">
               <span className="message-bubble-time">{m._sending ? 'Gönderiliyor...' : formatClock(m.createdAt)}</span>
+              {isMine && !m._sending && !isSystemThread && (
+                <span
+                  className={showReadReceipt ? 'read-receipt read-receipt-seen' : 'read-receipt'}
+                  title={showReadReceipt ? 'Görüldü' : 'Gönderildi'}
+                >
+                  {showReadReceipt ? '✓✓' : '✓'}
+                </span>
+              )}
               {isMine && !m._sending && (
                 <button className="message-bubble-delete" onClick={onDelete}>
                   Sil
                 </button>
               )}
             </div>
-            {showReadReceipt && <span className="read-receipt">Görüldü ✓✓</span>}
           </div>
           {!isMine && !isSystemThread && (
             <button type="button" className="message-hover-btn reply-btn" onClick={onReply} title="Yanıtla">

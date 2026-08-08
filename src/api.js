@@ -139,6 +139,7 @@ export const api = {
       request(`/messages/messages/${messageId}/react`, { method: 'POST', body: { emoji } }),
     accept: (conversationId) => request(`/messages/conversations/${conversationId}/accept`, { method: 'POST' }),
     decline: (conversationId) => request(`/messages/conversations/${conversationId}/decline`, { method: 'POST' }),
+    hide: (conversationId) => request(`/messages/conversations/${conversationId}/hide`, { method: 'POST' }),
     getUnreadCount: () => request('/messages/unread-count'),
   },
 
@@ -147,6 +148,7 @@ export const api = {
     getByListing: (listingType, listingId) => request(`/groups/by-listing/${listingType}/${listingId}`),
     getMessages: (groupId) => request(`/groups/${groupId}/messages`),
     send: (groupId, body) => request(`/groups/${groupId}/messages`, { method: 'POST', body: { body } }),
+    deleteMessage: (groupId, messageId) => request(`/groups/${groupId}/messages/${messageId}`, { method: 'DELETE' }),
   },
 
   reports: {

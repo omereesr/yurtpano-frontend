@@ -269,6 +269,10 @@ export default function OrdersTab({ mode = 'browse', onPosted }) {
             onChange={(e) => setForm({ ...form, note: e.target.value })}
           />
           {error && <p className="form-error">{error}</p>}
+          <p className="muted" style={{ fontSize: '0.8rem', marginTop: -6 }}>
+            💡 Varsayılan olarak "Katıl"a basan direkt katılır. Önce senin onayını istemelerini
+            istersen, <strong>Profilim → İlan Katılım Tercihi</strong>'nden değiştirebilirsin.
+          </p>
           <button className="btn-primary" type="submit" disabled={creating}>
             {creating ? 'Aciliyor...' : 'Ac'}
           </button>

@@ -23,12 +23,14 @@ export default function useUnreadCount() {
     if (socket) {
       socket.on('message:new', refresh)
       socket.on('conversation:new', refresh)
+      socket.on('groupMessage:new', refresh)
     }
     window.addEventListener('yurtpano:messages-read', refresh)
     return () => {
       if (socket) {
         socket.off('message:new', refresh)
         socket.off('conversation:new', refresh)
+        socket.off('groupMessage:new', refresh)
       }
       window.removeEventListener('yurtpano:messages-read', refresh)
     }
