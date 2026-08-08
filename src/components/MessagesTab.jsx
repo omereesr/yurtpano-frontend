@@ -8,6 +8,7 @@ import ReportButton from './ReportButton'
 import EmptyState from './EmptyState'
 import { formatClock } from '../utils/time'
 import useFixedViewport from '../hooks/useFixedViewport'
+import GroupChatView from './GroupChatView'
 
 const CONTEXT_LABELS = {
   listing: 'İkinci El İlanı',
@@ -31,6 +32,9 @@ export default function MessagesTab({ onNavigate }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeId, setActiveId] = useState(null)
+  const [groups, setGroups] = useState([])
+  const [groupsLoading, setGroupsLoading] = useState(true)
+  const [activeGroupId, setActiveGroupId] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -40,6 +44,17 @@ export default function MessagesTab({ onNavigate }) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadGroups() {
+    setGroupsLoading(true)
+    try {
+      setGroups(await api.groups.getGroups())
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGroupsLoading(false)
     }
   }
 
@@ -59,9 +74,31 @@ export default function MessagesTab({ onNavigate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    loadGroups()
+    const socket = getSocket()
+    if (!socket) return
+    const refreshGroups = () => loadGroups()
+    socket.on('groupMessage:new', refreshGroups)
+    return () => socket.off('groupMessage:new', refreshGroups)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const sohbetler = all.filter((c) => c.status === 'accepted' || (c.status === 'pending' && c.isInitiator))
   const istekler = all.filter((c) => c.status === 'pending' && !c.isInitiator)
   const list = view === 'sohbetler' ? sohbetler : istekler
+
+  if (activeGroupId) {
+    return (
+      <GroupChatView
+        groupId={activeGroupId}
+        onBack={() => {
+          setActiveGroupId(null)
+          loadGroups()
+        }}
+      />
+    )
+  }
 
   if (activeId) {
     return (
@@ -93,12 +130,55 @@ export default function MessagesTab({ onNavigate }) {
           >
             İstekler {istekler.length > 0 ? `(${istekler.length})` : ''}
           </button>
+          <button
+            className={view === 'gruplar' ? 'admin-subnav-btn active' : 'admin-subnav-btn'}
+            onClick={() => setView('gruplar')}
+          >
+            👥 Gruplar {groups.length > 0 ? `(${groups.length})` : ''}
+          </button>
         </div>
       </div>
 
       <div className="messages-scroll">
         {error && <p className="form-error">{error}</p>}
-        {loading ? (
+        {view === 'gruplar' ? (
+          groupsLoading ? (
+            <p className="muted">Yükleniyor...</p>
+          ) : groups.length === 0 ? (
+            <EmptyState
+              kind="chat"
+              title="Henüz bir grup sohbetin yok."
+              subtitle="Bir Ortak Sipariş veya Yolculuğa katılınca burada görünecek."
+            />
+          ) : (
+            <ul className="card-list">
+              {groups.map((g) => (
+                <li
+                  key={g.id}
+                  className={g.unread ? 'card conversation-unread' : 'card'}
+                  onClick={() => setActiveGroupId(g.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="card-tag">{g.listingType === 'order' ? 'Ortak Sipariş' : 'Yolculuk'}</div>
+                  <div className="feed-card-header" style={{ marginTop: 6 }}>
+                    {g.unread && <span className="unread-dot" title="Okunmadı" />}
+                    <h3 style={{ margin: 0 }} className={g.unread ? 'conversation-unread-title' : ''}>
+                      👥 {g.title}
+                    </h3>
+                  </div>
+                  <p className="card-meta">
+                    {g.memberCount} kişi{!g.isOpen ? ' - kapandı (sadece geçmiş)' : ''}
+                  </p>
+                  {g.lastMessage && (
+                    <p className={g.unread ? 'card-note conversation-unread-preview' : 'card-note'}>
+                      <strong>{g.lastMessage.sender?.name || g.lastMessage.senderId}:</strong> {g.lastMessage.body}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )
+        ) : loading ? (
           <p className="muted">Yükleniyor...</p>
         ) : list.length === 0 ? (
           <EmptyState

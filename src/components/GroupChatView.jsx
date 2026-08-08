@@ -163,28 +163,34 @@ export default function GroupChatView({ groupId, onBack }) {
         })}
       </div>
 
-      <form onSubmit={handleSend} className="messages-composer">
-        <div className="messages-composer-row">
-          <textarea
-            ref={textareaRef}
-            placeholder="Gruba yaz..."
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onFocus={handleComposerFocus}
-            onBlur={handleComposerBlur}
-            rows={1}
-          />
-          <button
-            className="btn-primary composer-send"
-            type="submit"
-            disabled={sending || !body.trim()}
-            onMouseDown={(e) => e.preventDefault()}
-          >
-            {sending ? '...' : 'Gönder'}
-          </button>
-        </div>
-        {error && <p className="form-error">{error}</p>}
-      </form>
+      {data.group.isOpen === false ? (
+        <p className="card-note" style={{ padding: '0 14px 14px' }}>
+          ⏳ Bu ilanın süresi doldu/kapandı, grup sohbeti artık sadece geçmişi gösteriyor.
+        </p>
+      ) : (
+        <form onSubmit={handleSend} className="messages-composer">
+          <div className="messages-composer-row">
+            <textarea
+              ref={textareaRef}
+              placeholder="Gruba yaz..."
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              onFocus={handleComposerFocus}
+              onBlur={handleComposerBlur}
+              rows={1}
+            />
+            <button
+              className="btn-primary composer-send"
+              type="submit"
+              disabled={sending || !body.trim()}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              {sending ? '...' : 'Gönder'}
+            </button>
+          </div>
+          {error && <p className="form-error">{error}</p>}
+        </form>
+      )}
     </div>
   )
 }
